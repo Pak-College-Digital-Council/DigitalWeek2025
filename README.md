@@ -1,4 +1,8 @@
+<!-- markdownlint-disable MD041 -->
+<!-- markdownlint-disable MD033 -->
+
 ### Digital Week 2025
+
 # CODEBREAKERS
 
 Welcome to **CODEBREAKERS**, a school-wide alternate reality game made by the **Pakuranga College Digital Council** for Digital Week 2025.
@@ -9,7 +13,13 @@ Welcome to **CODEBREAKERS**, a school-wide alternate reality game made by the **
 
 Stub! Add more here as things go on :)
 
+## TODO
+
+- [ ] make the StartScreen be a CLI thingy instead of a GUI thingy
+- [ ] Basicly the entirety of the game
+
 ## License
+
 See the `LICENSE` file for details.
 
 ---
@@ -23,4 +33,3 @@ See the `LICENSE` file for details.
 </div>
 
 <sub>This project is developed by the Digital Council at Pakuranga College, as part of our mission to increase students' digital awareness through fun and educational digital experiences.</sub>
-

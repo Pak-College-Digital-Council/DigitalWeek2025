@@ -1,0 +1,26 @@
+
+@font-face {
+  font-family: 'MorePerfectDOSVGA';
+  src: url('/fonts/MorePerfectDOSVGA.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.cli-animation-container {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    padding: 10px;
+    font-family: 'MorePerfectDOSVGA', 'Consolas', 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9em;
+    color: #ffffff;
+    width: auto;
+    max-width: 600px;
+    background: none;
+  }
+  
+  .cli-animation-container p {
+    margin: 0 0 3px 0;
+    white-space: pre-wrap;
+    line-height: 1.3;
+  }
