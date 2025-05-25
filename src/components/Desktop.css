@@ -16,13 +16,13 @@
   height: 55px;
   background-color: rgba(50, 50, 50, 0.3);
   backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px); /* i have safari */
+  -webkit-backdrop-filter: blur(20px); /* i hate safari */
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 10px;
+  padding: 0 15px;
   box-sizing: border-box;
   z-index: 1000;
   color: white; 
@@ -40,10 +40,10 @@
   align-items: flex-end; 
   text-align: right;    
   padding: 0 5px;
-  font-variant-numeric: tabular-nums;
-  -moz-font-feature-settings: "tnum" on;
-  -webkit-font-feature-settings: "tnum" on;
-  font-feature-settings: "tnum" on;
+  font-variant-numeric: tabular-nums, slashed-zero;
+  -moz-font-feature-settings: "tnum" on, "zero" on;
+  -webkit-font-feature-settings: "tnum" on, "zero" on;
+  font-feature-settings: "tnum" on, "zero" on;
 }
 
 .taskbar-clock-date .time {
