@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useCallback } from 'preact/hooks';
 import LoadingSpinner from './LoadingSpinner';
 import './LoginScreen.css';
 
@@ -12,8 +12,11 @@ const LoginScreen = ({ onLoginSuccess }) => {
     setPassword(event.target.value);
   };
 
-  const handleSignIn = (event) => {
-    event.preventDefault();
+  const handleSignIn = useCallback((event) => {
+    if (event) {
+      event.preventDefault();
+    }
+    
     if (loginStep !== 'form') return;
 
     const isValid = true; 
@@ -35,7 +38,7 @@ const LoginScreen = ({ onLoginSuccess }) => {
         setLoginStep('success');
       }, randomSpinnerTime);
     }, 400); 
-  };
+  }, [loginStep]);
 
   useEffect(() => {
     if (loginStep === 'success') {
@@ -47,6 +50,12 @@ const LoginScreen = ({ onLoginSuccess }) => {
       return () => clearTimeout(transitionToDesktopTimer);
     }
   }, [loginStep, onLoginSuccess]);
+
+  const handleInputKeyDown = (event) => {
+    if (event.key === 'Enter') {
+      handleSignIn(event);
+    }
+  };
 
   return (
     <div class="login-screen">
@@ -64,6 +73,7 @@ const LoginScreen = ({ onLoginSuccess }) => {
                 placeholder="Password"
                 value={password}
                 onInput={handlePasswordChange}
+                onKeyDown={handleInputKeyDown}
                 aria-label="Password"
                 disabled={loginStep === 'fading'}
               />
