@@ -15,7 +15,7 @@ Stub! Add more here as things go on :)
 
 ## TODO
 
-- [ ] make the StartScreen be a CLI thingy instead of a GUI thingy
+- [x] make the StartScreen be a CLI thingy instead of a GUI thingy
 - [ ] Basicly the entirety of the game
 
 ## License
