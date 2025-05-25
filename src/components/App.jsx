@@ -1,18 +1,13 @@
 import { h } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
-import StartScreen from './StartScreen';
-import CliAnimation from './CliAnimation';
+import BootAnimation from './BootAnimation';
 import LoginScreen from './LoginScreen';
 import Desktop from './Desktop'; 
 
 export function App() {
-  const [currentStage, setCurrentStage] = useState('start'); 
+  const [currentStage, setCurrentStage] = useState('boot'); 
 
-  const handleStartGame = () => {
-    setCurrentStage('cli');
-  };
-
-  const handleAnimationComplete = () => {
+  const handleBootSequenceComplete = () => {
     setCurrentStage('login');
   };
 
@@ -21,18 +16,17 @@ export function App() {
   };
 
   useEffect(() => {
-    if (currentStage === 'cli' || currentStage === 'login') {
+    if (currentStage === 'login' || currentStage === 'boot') {
       document.body.style.backgroundImage = 'none';
       document.body.style.backgroundColor = '#000'; 
-    } else if (currentStage === 'desktop' || currentStage === 'start') {
+    } else if (currentStage === 'desktop') {
       document.body.style.backgroundColor = 'transparent'; 
     }
   }, [currentStage]);
 
   return (
     <div class="app-container">
-      {currentStage === 'start' && <StartScreen onStartGame={handleStartGame} />}
-      {currentStage === 'cli' && <CliAnimation onAnimationComplete={handleAnimationComplete} />}
+      {currentStage === 'boot' && <BootAnimation onBootComplete={handleBootSequenceComplete} />}
       {currentStage === 'login' && <LoginScreen onLoginSuccess={handleLoginSuccess} />} 
       {currentStage === 'desktop' && <Desktop />}
     </div>
