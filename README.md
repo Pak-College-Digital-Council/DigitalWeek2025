@@ -16,7 +16,11 @@ Stub! Add more here as things go on :)
 ## TODO
 
 - [x] make the StartScreen be a CLI thingy instead of a GUI thingy
-- [ ] Basicly the entirety of the game
+- [ ] make basic desktop design
+- [ ] add in the different missions thru the desktop icons
+- [ ] work on admin panel to unlock missions
+- [ ] add different passwords for different teams to log in and have their own session to do the missions
+- [ ] plus a billion more things
 
 ## License
 
