@@ -160,6 +160,8 @@ const Terminal = ({ onClose, setClippyScript, onChallengeComplete }) => {
     if (isValidAnswer) {
       if (formattedInput === currentQuestion.correctAnswer) {
         setIncorrectCount(0);
+        // Prevent duplicate message by using a state flag
+        setGameState('processing_answer');
         setClippyScript([{
           text: currentQuestion.explanation.correct,
           interactive: true,
@@ -173,6 +175,8 @@ const Terminal = ({ onClose, setClippyScript, onChallengeComplete }) => {
         const incorrectMessages = currentQuestion.explanation.incorrect;
         const messageToShow = incorrectMessages[incorrectCount % incorrectMessages.length];
         setIncorrectCount(prev => prev + 1);
+        // Prevent duplicate message by using a state flag
+        setGameState('processing_wrong_answer');
         setClippyScript([{
           text: messageToShow,
           interactive: true,
@@ -184,6 +188,8 @@ const Terminal = ({ onClose, setClippyScript, onChallengeComplete }) => {
         }]);
       }
     } else {
+      // Prevent duplicate message by using a state flag
+      setGameState('processing_invalid');
       setClippyScript([{
         text: "Oops, that's not a valid option. Please enter A, B, or C.",
         interactive: true,
@@ -248,3 +254,4 @@ const Terminal = ({ onClose, setClippyScript, onChallengeComplete }) => {
 };
 
 export default Terminal;
+
