@@ -15,6 +15,10 @@ export function App() {
     setCurrentStage('desktop'); 
   };
 
+  const handleLogout = () => {
+    setCurrentStage('login');
+  };
+
   useEffect(() => {
     if (currentStage === 'login' || currentStage === 'boot') {
       document.body.style.backgroundImage = 'none';
@@ -28,7 +32,7 @@ export function App() {
     <div class="app-container">
       {currentStage === 'boot' && <BootAnimation onBootComplete={handleBootSequenceComplete} />}
       {currentStage === 'login' && <LoginScreen onLoginSuccess={handleLoginSuccess} />} 
-      {currentStage === 'desktop' && <Desktop />}
+      {currentStage === 'desktop' && <Desktop onLogout={handleLogout} />}
     </div>
   );
 }
