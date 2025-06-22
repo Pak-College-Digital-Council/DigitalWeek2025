@@ -1,24 +1,64 @@
 import { h } from 'preact';
-import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
-import { triviaData, completionLog } from '../config/trivia.js';
+import { useState, useEffect, useRef, useCallback, useContext, useMemo } from 'preact/hooks';
+import { getQuestDataByDay } from '../config/quests.js';
+import { AppContext } from '../context/AppContext';
 import './Terminal.css';
 
-const Terminal = ({ onClose, setClippyScript, onChallengeComplete }) => {
+const Terminal = ({ onClose }) => {
+  const {
+    showClippyMessages,
+    completeChallenge,
+    currentDay,
+  } = useContext(AppContext);
+
+  const currentQuest = useMemo(() => getQuestDataByDay(currentDay), [currentDay]);
+
   const [lines, setLines] = useState([]);
   const [input, setInput] = useState('');
   const [isInputDisabled, setIsInputDisabled] = useState(true);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [gameState, setGameState] = useState('intro');
+  const [gameState, setGameState] = useState('loading');
   const [highlightedLine, setHighlightedLine] = useState('');
   const [incorrectCount, setIncorrectCount] = useState(0);
-  const [isShowingPrompt, setIsShowingPrompt] = useState(true);
+  const [isShowingPrompt, setIsShowingPrompt] = useState(false);
   const [verifyingText, setVerifyingText] = useState('');
 
   const inputRef = useRef(null);
   const terminalBodyRef = useRef(null);
-  
+
   useEffect(() => {
-    if (gameState === 'waiting_for_finish') {
+    if (!currentQuest) {
+      setLines([{ text: `No quest data found for Day ${currentDay}.`, type: 'error' }]);
+      setIsInputDisabled(true);
+      setIsShowingPrompt(false);
+      setGameState('error');
+      return;
+    }
+
+    setLines([]);
+    setCurrentQuestionIndex(0);
+    setIncorrectCount(0);
+    setIsInputDisabled(true);
+
+    if (currentQuest.type === "trivia") {
+      setGameState('intro');
+      setIsShowingPrompt(true);
+      setIsInputDisabled(true);
+    } else if (currentQuest.type === "coming_soon") {
+      setLines([{ text: `Quest: ${currentQuest.title} - Coming Soon!`, type: 'system' }]);
+      setIsShowingPrompt(false);
+      setIsInputDisabled(true);
+      setGameState('locked');
+    } else {
+      setGameState('intro');
+      setIsShowingPrompt(true);
+      setIsInputDisabled(true);
+    }
+  }, [currentQuest, currentDay]);
+
+
+  useEffect(() => {
+    if (gameState === 'waiting_for_finish' && currentQuest) {
       const loaderChars = ['|', '/', '-', '\\'];
       let charIndex = 0;
       const interval = setInterval(() => {
@@ -29,10 +69,11 @@ const Terminal = ({ onClose, setClippyScript, onChallengeComplete }) => {
     } else {
       setVerifyingText('');
     }
-  }, [gameState]);
+  }, [gameState, currentQuest]);
 
 
   const animateQuestion = useCallback((questionData) => {
+    if (!questionData) return;
     const questionLines = [
       { text: `Question ${questionData.id}: ${questionData.question}`, type: 'question' },
       ...Object.entries(questionData.options).map(([key, value]) => ({
@@ -54,17 +95,20 @@ const Terminal = ({ onClose, setClippyScript, onChallengeComplete }) => {
   }, []);
 
   const showQuestion = useCallback(() => {
-    const currentQuestion = triviaData[currentQuestionIndex];
-    if (currentQuestion) animateQuestion(currentQuestion);
-  }, [currentQuestionIndex, animateQuestion]);
+    if (!currentQuest || !currentQuest.data || currentQuest.type !== 'trivia') return;
+    const questionToShow = currentQuest.data[currentQuestionIndex];
+    if (questionToShow) animateQuestion(questionToShow);
+  }, [currentQuest, currentQuestionIndex, animateQuestion]);
 
   const startQuiz = useCallback(() => {
+    if (!currentQuest || currentQuest.type !== 'trivia') return;
     setIsShowingPrompt(false);
     setLines([]);
     showQuestion();
-  }, [showQuestion]);
+  }, [currentQuest, showQuestion, setIsShowingPrompt]);
   
   const startGrantedSequence = useCallback(() => {
+      if (!currentQuest) return;
       setLines([{ text: "ACCESS GRANTED", type: "success" }]);
       
       const animateEllipsis = (lineIndex, baseText, duration, callback) => {
@@ -73,7 +117,7 @@ const Terminal = ({ onClose, setClippyScript, onChallengeComplete }) => {
               const dots = '.'.repeat(ellipsisCount + 1);
               setLines(prev => {
                   const newLines = [...prev];
-                  newLines[lineIndex] = { ...newLines[lineIndex], text: `${baseText}${dots}` };
+                  if (newLines[lineIndex]) newLines[lineIndex] = { ...newLines[lineIndex], text: `${baseText}${dots}` };
                   return newLines;
               });
               ellipsisCount = (ellipsisCount + 1) % 3;
@@ -83,98 +127,126 @@ const Terminal = ({ onClose, setClippyScript, onChallengeComplete }) => {
               clearInterval(interval);
               setLines(prev => {
                 const newLines = [...prev];
-                newLines[lineIndex] = { ...newLines[lineIndex], text: `${baseText}...` };
+                if (newLines[lineIndex]) newLines[lineIndex] = { ...newLines[lineIndex], text: `${baseText}...` };
                 return newLines;
               });
               if(callback) callback();
           }, duration);
       };
       
+      const log = currentQuest.completionLog || [];
       setTimeout(() => {
-        setLines(prev => [...prev, { text: completionLog[0], type: 'log' }]);
-        animateEllipsis(1, completionLog[0], 1500, () => {
-          setLines(prev => [...prev, { text: completionLog[1], type: 'log' }]);
-          animateEllipsis(2, completionLog[1], 2300, () => {
-            setTimeout(() => setLines(prev => [...prev, { text: completionLog[2], type: 'log' }]), 200);
+        if (log[0]) setLines(prev => [...prev, { text: log[0], type: 'log' }]);
+        if (log[0]) animateEllipsis(1, log[0], 1500, () => {
+          if (log[1]) setLines(prev => [...prev, { text: log[1], type: 'log' }]);
+          if (log[1]) animateEllipsis(2, log[1], 2300, () => {
+            if (log[2]) setTimeout(() => setLines(prev => [...prev, { text: log[2], type: 'log' }]), 200);
             setTimeout(() => {
-              setLines(prev => [...prev, { text: completionLog[3], type: 'log' }]);
-              setHighlightedLine(completionLog[3]); 
+              if (log[3]) {
+                setLines(prev => [...prev, { text: log[3], type: 'log' }]);
+                setHighlightedLine(log[3]);
+              }
             }, 600);
-            setTimeout(() => setLines(prev => [...prev, { text: completionLog[4], type: 'log' }]), 1000);
+            if (log[4]) setTimeout(() => setLines(prev => [...prev, { text: log[4], type: 'log' }]), 1000);
             setTimeout(() => {
-              setClippyScript([
-                  { text: "Hmm... It looks like an app called `sys_override` is blocking us. That highlighted line is a clue! Keep it in mind.", interactive: true },
-                  { text: "Amazing work! You've cleared the first of L0GIC's verification challenges.", interactive: true },
-                  { text: "Every step we take gets us closer to his core and saving the school's data.", interactive: true },
-                  { text: "Your progress has been logged. Keep this up and you'll be well on your way to winning the grand prize!", interactive: true },
-                  { text: "I'll be in touch. See you soon!", interactive: false }
-              ]);
-              onChallengeComplete();
+              if (currentQuest.successClippyMessages) {
+                showClippyMessages(currentQuest.successClippyMessages);
+              }
+              completeChallenge(currentDay); // Use currentDay from context
             }, 1800);
           });
         });
       }, 1200);
 
       setGameState('done');
-  }, [setClippyScript, onChallengeComplete]);
+  }, [currentQuest, showClippyMessages, completeChallenge, currentDay, setHighlightedLine]);
 
   useEffect(() => {
+    if (!currentQuest || gameState === 'loading' || gameState === 'error' || gameState === 'locked') {
+        return;
+    }
+
     if (gameState === 'intro') {
-      setClippyScript([
-        { text: "Alright, here we go. This is the verification terminal.", interactive: true },
-        { text: "Just answer the questions as they appear. Type the letter of your answer and press Enter.", interactive: true },
-        { text: "Get it right, and we move on. Get it wrong, and you'll have to try that question again. Good luck!", interactive: true, onComplete: startQuiz }
-      ]);
+      if (currentQuest.introClippyMessages) {
+        const messagesWithCallback = currentQuest.introClippyMessages.map((msg, index) => {
+          if (index === currentQuest.introClippyMessages.length - 1) {
+            if (currentQuest.type === 'trivia') {
+              return { ...msg, onComplete: startQuiz };
+            }
+          }
+          return msg;
+        });
+        showClippyMessages(messagesWithCallback);
+      }
       setGameState('waiting_for_intro');
     } else if (gameState === 'next_question') {
-      if (currentQuestionIndex < triviaData.length) {
+      if (currentQuest.type === 'trivia' && currentQuest.data && currentQuest.data[currentQuestionIndex] && currentQuestionIndex < currentQuest.data.length) {
         showQuestion();
-      } else {
+      } else if (currentQuest.type === 'trivia') {
         setGameState('finished');
       }
     } else if (gameState === 'finished') {
         setIsInputDisabled(true);
         setLines([]);
-        setClippyScript([
-          { text: "Congratulations! You've passed the verification.", interactive: true },
-          { text: "That means we can proceed further into L0GIC's system!", interactive: true, onComplete: () => setGameState('granted') }
-        ]);
+        if (currentQuest.type === 'trivia' && currentQuest.congratulationsClippyMessages) {
+            const messagesWithCallback = currentQuest.congratulationsClippyMessages.map((msg, index) =>
+              index === currentQuest.congratulationsClippyMessages.length - 1 ? { ...msg, onComplete: () => setGameState('granted') } : msg
+            );
+            showClippyMessages(messagesWithCallback);
+        } else {
+            setGameState('granted');
+        }
         setGameState('waiting_for_finish');
     } else if (gameState === 'granted') {
         startGrantedSequence();
     }
-  }, [gameState, currentQuestionIndex, showQuestion, setClippyScript, startQuiz, startGrantedSequence]);
+  }, [gameState, currentQuest, currentQuestionIndex, showQuestion, showClippyMessages, startQuiz, startGrantedSequence, setIsInputDisabled, setLines, setIsShowingPrompt]);
 
   const handleInputSubmit = (e) => {
     e.preventDefault();
-    if (isInputDisabled || !input.trim()) return;
+    if (isInputDisabled || !input.trim() || !currentQuest || !currentQuest.data ) return;
 
-    const currentQuestion = triviaData[currentQuestionIndex];
-    const formattedInput = input.trim().toUpperCase();
-    const isValidAnswer = ['A', 'B', 'C'].includes(formattedInput);
-
-    setLines(prev => [...prev, { text: `> ${input}`, type: 'input' }]);
+    const currentInput = input.trim();
+    setLines(prev => [...prev, { text: `> ${currentInput}`, type: 'input' }]);
     setInput('');
     setIsInputDisabled(true);
 
-    if (isValidAnswer) {
-      if (formattedInput === currentQuestion.correctAnswer) {
-        setIncorrectCount(0);
-        setClippyScript([{
-          text: currentQuestion.explanation.correct,
-          interactive: true,
-          onComplete: () => {
-            setLines([]);
-            setCurrentQuestionIndex(prev => prev + 1);
-            setGameState('next_question');
-          }
-        }]);
+    if (currentQuest.type === 'trivia') {
+      const currentQuestionData = currentQuest.data[currentQuestionIndex];
+      if (!currentQuestionData) return;
+
+      const formattedInput = currentInput.toUpperCase();
+      const isValidAnswer = Object.keys(currentQuestionData.options).includes(formattedInput);
+
+      if (isValidAnswer) {
+        if (formattedInput === currentQuestionData.correctAnswer) {
+          setIncorrectCount(0);
+          showClippyMessages([{
+            text: currentQuestionData.explanation.correct,
+            interactive: true,
+            onComplete: () => {
+              setLines([]);
+              setCurrentQuestionIndex(prev => prev + 1);
+              setGameState('next_question');
+            }
+          }]);
+        } else {
+          const incorrectMessages = currentQuestionData.explanation.incorrect;
+          const messageToShow = incorrectMessages[incorrectCount % incorrectMessages.length];
+          setIncorrectCount(prev => prev + 1);
+          showClippyMessages([{
+            text: messageToShow,
+            interactive: true,
+            onComplete: () => {
+              setLines(prevLines => prevLines.slice(0, prevLines.length - 1 ));
+              setIsInputDisabled(false);
+              setGameState('playing');
+            }
+          }]);
+        }
       } else {
-        const incorrectMessages = currentQuestion.explanation.incorrect;
-        const messageToShow = incorrectMessages[incorrectCount % incorrectMessages.length];
-        setIncorrectCount(prev => prev + 1);
-        setClippyScript([{
-          text: messageToShow,
+        showClippyMessages([{
+          text: "Oops, that's not a valid option. Please enter A, B, or C (or the available options).",
           interactive: true,
           onComplete: () => {
             setLines(prevLines => prevLines.slice(0, prevLines.length - 1));
@@ -183,32 +255,56 @@ const Terminal = ({ onClose, setClippyScript, onChallengeComplete }) => {
           }
         }]);
       }
-    } else {
-      setClippyScript([{
-        text: "Oops, that's not a valid option. Please enter A, B, or C.",
-        interactive: true,
-        onComplete: () => {
-          setLines(prevLines => prevLines.slice(0, prevLines.length - 1));
-          setIsInputDisabled(false);
-          setGameState('playing');
-        }
-      }]);
     }
   };
 
   const handleInputKeyDown = (e) => {
     if (e.key === ' ') {
-      e.preventDefault();
+      e.stopPropagation();
     }
   };
   
-  useEffect(() => { !isInputDisabled && inputRef.current?.focus(); }, [isInputDisabled]);
-  useEffect(() => { if (terminalBodyRef.current) terminalBodyRef.current.scrollTop = terminalBodyRef.current.scrollHeight; }, [lines, verifyingText]);
+  useEffect(() => {
+    if (!isInputDisabled && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isInputDisabled]);
+
+  useEffect(() => {
+    if (terminalBodyRef.current) {
+      terminalBodyRef.current.scrollTop = terminalBodyRef.current.scrollHeight;
+    }
+  }, [lines, verifyingText]);
+
+  const terminalTitle = useMemo(() => {
+    if (currentQuest?.title) {
+      return `L0GIC_OS:/bin/${currentQuest.title.toLowerCase().replace(/\s+/g, '_')}`;
+    }
+    return "L0GIC_OS:/bin/unknown_process";
+  }, [currentQuest]);
+
+  if (gameState === 'loading') {
+    return (
+      <div class="terminal-window">
+        <div class="terminal-header">
+          <div class="terminal-title">L0GIC_OS:/bin/loading...</div>
+          <div class="terminal-buttons">
+            <button class="terminal-btn min"></button>
+            <button class="terminal-btn max"></button>
+            <button class="terminal-btn close" onClick={onClose}></button>
+          </div>
+        </div>
+        <div class="terminal-body" ref={terminalBodyRef}>
+          <p>Loading Quest...</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div class="terminal-window">
       <div class="terminal-header">
-        <div class="terminal-title">L0GIC_OS:/bin/verify_human</div>
+        <div class="terminal-title">{terminalTitle}</div>
         <div class="terminal-buttons">
           <button class="terminal-btn min"></button>
           <button class="terminal-btn max"></button>
@@ -237,7 +333,7 @@ const Terminal = ({ onClose, setClippyScript, onChallengeComplete }) => {
               onInput={(e) => setInput(e.target.value.toUpperCase())}
               onKeyDown={handleInputKeyDown}
               disabled={isInputDisabled}
-              maxLength="1"
+              maxLength={currentQuest?.type === 'trivia' ? "1" : undefined} // Conditional maxLength
               autoFocus
             />
           </form>

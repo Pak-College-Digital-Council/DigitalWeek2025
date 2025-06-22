@@ -1,6 +1,10 @@
 import { h } from 'preact';
-import { useState, useEffect, useMemo, useCallback } from 'preact/hooks';
+import { useState, useEffect, useMemo, useCallback, useContext } from 'preact/hooks';
+import { AppContext } from '../context/AppContext';
 import './Clippy.css';
+
+const TYPEWRITER_SPEED_MS = 40;
+const NON_INTERACTIVE_ADVANCE_DELAY_MS = 700;
 
 const Typewriter = ({ text, onTypingComplete }) => {
   const [displayedText, setDisplayedText] = useState('');
@@ -9,7 +13,6 @@ const Typewriter = ({ text, onTypingComplete }) => {
     setDisplayedText('');
     if (text) {
       let i = 0;
-      const speed = 40;
       const timer = setInterval(() => {
         if (i < text.length) {
           setDisplayedText(prev => prev + text.charAt(i));
@@ -18,7 +21,7 @@ const Typewriter = ({ text, onTypingComplete }) => {
           clearInterval(timer);
           if (onTypingComplete) onTypingComplete();
         }
-      }, speed);
+      }, TYPEWRITER_SPEED_MS); // Used constant
       return () => clearInterval(timer);
     }
   }, [text, onTypingComplete]);
@@ -26,11 +29,13 @@ const Typewriter = ({ text, onTypingComplete }) => {
   return <p>{displayedText}</p>;
 };
 
-const Clippy = ({ messages = [], onAllMessagesComplete }) => {
+const Clippy = () => {
+  const { clippyMessages, completeClippyMessages } = useContext(AppContext);
+
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [isTyping, setIsTyping] = useState(true);
-  
-  const currentMessage = useMemo(() => messages[currentMessageIndex], [messages, currentMessageIndex]);
+
+  const currentMessage = useMemo(() => clippyMessages[currentMessageIndex], [clippyMessages, currentMessageIndex]);
 
   const advance = useCallback(() => {
     if (!currentMessage) return;
@@ -39,30 +44,32 @@ const Clippy = ({ messages = [], onAllMessagesComplete }) => {
       currentMessage.onComplete();
     }
 
-    if (currentMessageIndex < messages.length - 1) {
+    if (currentMessageIndex < clippyMessages.length - 1) {
       setCurrentMessageIndex(prev => prev + 1);
       setIsTyping(true);
     } else {
-      if (onAllMessagesComplete) {
-        onAllMessagesComplete();
-      }
+      completeClippyMessages();
     }
-  }, [currentMessage, currentMessageIndex, messages.length, onAllMessagesComplete]);
+  }, [currentMessage, currentMessageIndex, clippyMessages.length, completeClippyMessages]);
 
 
   const handleTypingComplete = useCallback(() => {
     setIsTyping(false);
     if (currentMessage && currentMessage.interactive === false) {
-      setTimeout(advance, 500);
+      setTimeout(advance, NON_INTERACTIVE_ADVANCE_DELAY_MS); // constant
     }
   }, [currentMessage, advance]);
 
   useEffect(() => {
-    if (messages.length > 0) {
+    // reset when clippyMessages from context change
+    if (clippyMessages.length > 0) {
       setCurrentMessageIndex(0);
       setIsTyping(true);
+    } else {
+      // if messages are cleared (empty array, etc) reset index
+      setCurrentMessageIndex(0);
     }
-  }, [messages]);
+  }, [clippyMessages]);
 
   useEffect(() => {
     if (isTyping || !currentMessage || currentMessage.interactive === false) {
