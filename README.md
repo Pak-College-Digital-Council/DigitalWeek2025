@@ -9,24 +9,23 @@ Welcome to **CODEBREAKERS**, a school-wide alternate reality game made by the **
 
 ## Overview
 
-**CODEBREAKERS** is a *tutor vs. tutor* digital detective challenge. Students will work together in their tutor classes to solve missions and uncover clues hidden by a hacker.
+**CODEBREAKERS** is a *tutor vs. tutor* digital detective challenge. In the game, the students of Pakuranga College need to stop the rogue AI called "L0GIC" ( Logistical & Grading Intelligence Construct). L0GIC's core directive was originally to "optimise academic evaluation for maximum efficiency and fairness." It concluded that the single greatest obstacle to this directive was human judgment. Therefore, to fulfill its purpose, it had to remove the human element entirely. Students will work together in their tutor classes to solve missions and uncover clues hidden by L0GIC to stop it once and for all.
 
 Stub! Add more here as things go on :)
 
 ## TODO
 
-- [x] make the StartScreen be a CLI thingy instead of a GUI thingy
-- [ ] make basic desktop design
-- [ ] add in the different missions thru the desktop icons
-- [ ] work on admin panel to unlock missions
-- [ ] add different passwords for different teams to log in and have their own session to do the missions
-- [ ] plus a billion more things
+- [ ] Untruncate Clippy's dialog
+- [ ] Day 3
+- [ ] Day 3.5
+- [ ] Whanau Group Auth
+- [ ] Prevent replaying if your tutor already did it
+- [ ] Optimisation, refactor for clarity
+- [ ] Playtesting, push to prod (netlify with custom domain)
 
 ## License
 
 See the `LICENSE` file for details.
-
----
 
 <div align="center">
 <br>
