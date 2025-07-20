@@ -26,16 +26,23 @@ const Typewriter = ({ text, onTypingComplete }) => {
     }
   }, [text, onTypingComplete]);
 
-  return <p>{displayedText}</p>;
+  return <p dangerouslySetInnerHTML={{ __html: displayedText }}></p>;
 };
 
 const Clippy = () => {
-  const { clippyMessages, completeClippyMessages } = useContext(AppContext);
+  const { clippyMessages, completeClippyMessages, persistentClippyMessages } = useContext(AppContext);
 
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [isTyping, setIsTyping] = useState(true);
 
-  const currentMessage = useMemo(() => clippyMessages[currentMessageIndex], [clippyMessages, currentMessageIndex]);
+  const currentMessage = useMemo(() => {
+    if (clippyMessages.length > 0) {
+      return clippyMessages[currentMessageIndex];
+    } else if (persistentClippyMessages.length > 0) {
+      return persistentClippyMessages[0];
+    }
+    return null;
+  }, [clippyMessages, currentMessageIndex, persistentClippyMessages]);
 
   const advance = useCallback(() => {
     if (!currentMessage) return;
@@ -44,10 +51,10 @@ const Clippy = () => {
       currentMessage.onComplete();
     }
 
-    if (currentMessageIndex < clippyMessages.length - 1) {
+    if (clippyMessages.length > 0 && currentMessageIndex < clippyMessages.length - 1) {
       setCurrentMessageIndex(prev => prev + 1);
       setIsTyping(true);
-    } else {
+    } else if (clippyMessages.length > 0) {
       completeClippyMessages();
     }
   }, [currentMessage, currentMessageIndex, clippyMessages.length, completeClippyMessages]);
@@ -55,18 +62,21 @@ const Clippy = () => {
 
   const handleTypingComplete = useCallback(() => {
     setIsTyping(false);
+    
+    if (currentMessage && currentMessage.onTypingComplete) {
+      currentMessage.onTypingComplete();
+    }
+    
     if (currentMessage && currentMessage.interactive === false) {
-      setTimeout(advance, NON_INTERACTIVE_ADVANCE_DELAY_MS); // constant
+      setTimeout(advance, NON_INTERACTIVE_ADVANCE_DELAY_MS);
     }
   }, [currentMessage, advance]);
 
   useEffect(() => {
-    // reset when clippyMessages from context change
     if (clippyMessages.length > 0) {
       setCurrentMessageIndex(0);
       setIsTyping(true);
     } else {
-      // if messages are cleared (empty array, etc) reset index
       setCurrentMessageIndex(0);
     }
   }, [clippyMessages]);
@@ -99,7 +109,7 @@ const Clippy = () => {
     <div class="clippy-container">
       <div class="clippy-speech-bubble">
         <Typewriter text={currentMessage.text} onTypingComplete={handleTypingComplete} />
-        {!isTyping && currentMessage.interactive !== false && (
+        {!isTyping && currentMessage.interactive !== false && clippyMessages.length > 0 && (
           <div class="continue-prompt">
             Press [SPACE] to continue <span class="blinking-cursor">_</span>
           </div>

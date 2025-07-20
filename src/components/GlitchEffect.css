@@ -1,0 +1,20 @@
+.glitch-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  pointer-events: none;
+  transition: none;
+}
+
+.glitch-overlay.transparent {
+  background-color: transparent;
+}
+
+.glitch-overlay.black {
+  background-color: #000000;
+}
+
+/* Removed grain/static effect - just clean black screen now */

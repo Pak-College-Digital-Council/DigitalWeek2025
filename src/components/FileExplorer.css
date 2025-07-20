@@ -54,7 +54,7 @@
   font-size: 0.85rem;
   color: #c0c0c0;
 }
-.window-controls { display: flex; align-items: center; padding-right: 8px; } /* Added padding and align items */
+.window-controls { display: flex; align-items: center; padding-right: 8px; }
 .window-btn {
   width: 15px;
   height: 15px;

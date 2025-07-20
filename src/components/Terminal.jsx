@@ -152,7 +152,7 @@ const Terminal = ({ onClose }) => {
               if (currentQuest.successClippyMessages) {
                 showClippyMessages(currentQuest.successClippyMessages);
               }
-              completeChallenge(currentDay); // Use currentDay from context
+              completeChallenge(currentDay);
             }, 1800);
           });
         });
@@ -333,7 +333,7 @@ const Terminal = ({ onClose }) => {
               onInput={(e) => setInput(e.target.value.toUpperCase())}
               onKeyDown={handleInputKeyDown}
               disabled={isInputDisabled}
-              maxLength={currentQuest?.type === 'trivia' ? "1" : undefined} // Conditional maxLength
+              maxLength={currentQuest?.type === 'trivia' ? "1" : undefined}
               autoFocus
             />
           </form>

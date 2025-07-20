@@ -147,7 +147,7 @@
   background: none;
   border: none;
   color: #e0e0e0;
-  font-family: inherit;
+  font-family: 'MorePerfectDOSVGA', 'Courier New', monospace;
   font-size: inherit;
   flex-grow: 1;
   outline: none;
@@ -172,4 +172,90 @@
 
 .terminal-body::-webkit-scrollbar-thumb:hover {
   background-color: #777;
+}
+.terminal-input-line {
+  display: flex;
+  align-items: center;
+  font-family: 'MorePerfectDOSVGA', 'Courier New', monospace;
+}
+
+.terminal-prompt {
+  color: #4ade80;
+  margin-right: 4px;
+  padding-left: 8px;
+  font-family: 'MorePerfectDOSVGA', 'Courier New', monospace;
+}
+
+.terminal-cursor {
+  color: #e0e0e0;
+  font-family: 'MorePerfectDOSVGA', 'Courier New', monospace;
+  animation: blink 1s step-end infinite;
+  margin-left: 2px;
+}
+
+.terminal-line {
+  font-family: 'MorePerfectDOSVGA', 'Courier New', monospace;
+  color: #e0e0e0;
+  margin: 2px 0;
+}
+
+.terminal-output {
+  font-family: 'MorePerfectDOSVGA', 'Courier New', monospace;
+}
+.terminal-command {
+  color: #e0e0e0;
+  font-family: 'MorePerfectDOSVGA', 'Courier New', monospace;
+}
+
+.terminal-input-hidden {
+  position: absolute;
+  left: -9999px;
+  opacity: 0;
+  pointer-events: none;
+}
+.terminal-line.command {
+  color: #4ade80;
+  font-family: 'MorePerfectDOSVGA', 'Courier New', monospace;
+  padding-left: 8px;
+}
+
+.terminal-line.output {
+  color: #e0e0e0;
+  font-family: 'MorePerfectDOSVGA', 'Courier New', monospace;
+  padding-left: 8px;
+  margin: 2px 0;
+}
+
+.terminal-line.error {
+  color: #ff6b6b;
+  font-family: 'MorePerfectDOSVGA', 'Courier New', monospace;
+  padding-left: 8px;
+  margin: 2px 0;
+}
+
+.loading-spinner {
+  color: #4ade80;
+  font-family: 'MorePerfectDOSVGA', 'Courier New', monospace;
+  padding-left: 8px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { content: '⠋'; }
+  12.5% { content: '⠙'; }
+  25% { content: '⠹'; }
+  37.5% { content: '⠸'; }
+  50% { content: '⠼'; }
+  62.5% { content: '⠴'; }
+  75% { content: '⠦'; }
+  87.5% { content: '⠧'; }
+  100% { content: '⠇'; }
+}
+
+.terminal-window.loading {
+  cursor: wait;
+}
+
+.terminal-window.loading * {
+  cursor: wait;
 }

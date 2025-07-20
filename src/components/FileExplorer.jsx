@@ -40,7 +40,7 @@ const InfoIcon = ({onClick}) => (
 
 
 const FileExplorer = ({ questData, onClose }) => {
-  const { showClippyMessages, completeChallenge, startLogoutCountdown, currentDay, clippyMessages, completeClippyMessages: clearPrevClippyMessages } = useContext(AppContext);
+  const { showClippyMessages, completeChallenge, currentDay, clippyMessages, completeClippyMessages: clearPrevClippyMessages } = useContext(AppContext);
   const [unsortedFiles, setUnsortedFiles] = useState([]);
   const [safeFiles, setSafeFiles] = useState([]);
   const [suspiciousFiles, setSuspiciousFiles] = useState([]);
@@ -51,7 +51,7 @@ const FileExplorer = ({ questData, onClose }) => {
 
   const [animatedTitleVisible, setAnimatedTitleVisible] = useState(false);
   const [displayedLogLines, setDisplayedLogLines] = useState([]);
-  const [currentLogLineIndex, setCurrentLogLineIndex] = useState(0); // Restored state
+  const [currentLogLineIndex, setCurrentLogLineIndex] = useState(0);
   const [logAnimationComplete, setLogAnimationComplete] = useState(false);
   const [signatureVisible, setSignatureVisible] = useState(false);
 
@@ -109,7 +109,6 @@ const FileExplorer = ({ questData, onClose }) => {
     }
   }, [logAnimationComplete]);
 
-  // ... (other state and useEffects)
 
   useEffect(() => {
     if (signatureVisible) {
@@ -119,7 +118,6 @@ const FileExplorer = ({ questData, onClose }) => {
             return {
               ...msg,
               onComplete: () => {
-                startLogoutCountdown();
                 setTimeout(() => {
                   if (onClose) onClose();
                 }, 0);
@@ -130,11 +128,10 @@ const FileExplorer = ({ questData, onClose }) => {
         });
         showClippyMessages(messagesWithFinalAction);
       } else {
-        startLogoutCountdown();
         setTimeout(() => { if (onClose) onClose(); }, 0);
       }
     }
-  }, [signatureVisible, questData.successClippyMessages, showClippyMessages, onClose, startLogoutCountdown, clearPrevClippyMessages]);
+  }, [signatureVisible, questData.successClippyMessages, showClippyMessages, onClose, clearPrevClippyMessages]);
 
 
   const handleDragStart = (e, file) => {

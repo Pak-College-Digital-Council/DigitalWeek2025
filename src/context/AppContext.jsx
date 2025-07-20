@@ -8,9 +8,12 @@ export const AppContext = createContext();
 export const AppProvider = ({ children }) => {
   const [currentDay, setCurrentDay] = useState(ACTIVE_DAY);
   const [clippyMessages, setClippyMessages] = useState([]);
+  const [persistentClippyMessages, setPersistentClippyMessages] = useState([]);
   const [highlightedIconDay, setHighlightedIconDay] = useState(null);
   const [challengeCompletion, setChallengeCompletion] = useState({});
-  const [showLogoutCountdown, setShowLogoutCountdown] = useState(false);
+  const [finaleMode, setFinaleMode] = useState(false);
+  const [showGlitchEffect, setShowGlitchEffect] = useState(false);
+
 
   const currentQuestData = useMemo(() => getQuestDataByDay(currentDay), [currentDay]);
 
@@ -22,17 +25,31 @@ export const AppProvider = ({ children }) => {
     setClippyMessages([]);
   }, []);
 
+  const showPersistentClippyMessages = useCallback((messages) => {
+    setPersistentClippyMessages(messages);
+  }, []);
+
+  const clearPersistentClippyMessages = useCallback(() => {
+    setPersistentClippyMessages([]);
+  }, []);
+
 
   const completeChallenge = useCallback((dayId) => {
     setChallengeCompletion(prev => ({ ...prev, [dayId]: true }));
   }, []);
 
-  const startLogoutCountdown = useCallback(() => {
-    setShowLogoutCountdown(true);
-  }, []);
+
 
   const triggerHighlightTerminalIcon = useCallback((dayToHighlight) => {
     setHighlightedIconDay(dayToHighlight);
+  }, []);
+
+  const startFinaleSequence = useCallback(() => {
+    setFinaleMode(true);
+  }, []);
+
+  const triggerGlitchEffect = useCallback(() => {
+    setShowGlitchEffect(true);
   }, []);
 
   const contextValueDefinition = {
@@ -42,12 +59,17 @@ export const AppProvider = ({ children }) => {
     clippyMessages,
     showClippyMessages,
     completeClippyMessages,
+    persistentClippyMessages,
+    showPersistentClippyMessages,
+    clearPersistentClippyMessages,
     highlightedIconDay,
     triggerHighlightTerminalIcon,
     challengeCompletion,
     completeChallenge,
-    showLogoutCountdown,
-    startLogoutCountdown,
+    finaleMode,
+    startFinaleSequence,
+    showGlitchEffect,
+    triggerGlitchEffect,
   };
 
   useEffect(() => {

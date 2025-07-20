@@ -13,6 +13,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -22,7 +23,8 @@
 .clippy-character {
   width: 120px;
   height: 120px;
-  background-image: url('/icons/clippy.svg'); /* get art deparmtne to make a better one */
+  background-image: url('/icons/clippy.svg');
+  /* get art deparmtne to make a better one */
   background-size: contain;
   background-repeat: no-repeat;
   margin-left: -20px;
@@ -45,8 +47,8 @@
 }
 
 .clippy-speech-bubble p {
-    margin: 0;
-    min-height: 1.5em;
+  margin: 0;
+  min-height: 1.5em;
 }
 
 .clippy-speech-bubble::after {
@@ -76,10 +78,23 @@
 }
 
 @keyframes blink {
-  from, to {
+
+  from,
+  to {
     opacity: 1;
   }
+
   50% {
     opacity: 0;
   }
+}
+
+.clippy-speech-bubble code {
+  background-color: #4ade80;
+  color: #000000;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'MorePerfectDOSVGA', 'Courier New', monospace;
+  font-weight: bold;
+  font-size: 0.9em;
 }

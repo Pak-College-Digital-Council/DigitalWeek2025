@@ -1,0 +1,22 @@
+
+.finale-terminal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #000000;
+  color: #ffffff;
+  font-family: 'MorePerfectDOSVGA', 'Courier New', monospace;
+  font-size: 16px;
+  padding: 40px;
+  z-index: 10000;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.finale-cursor {
+  font-size: 16px;
+  line-height: 1.2;
+  font-family: 'MorePerfectDOSVGA', 'Courier New', monospace;
+}

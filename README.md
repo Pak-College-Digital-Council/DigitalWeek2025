@@ -15,12 +15,12 @@ Stub! Add more here as things go on :)
 
 ## TODO
 
-- [ ] Untruncate Clippy's dialog
-- [ ] Day 3
+- [x] Day 3
 - [ ] Day 3.5
 - [ ] Whanau Group Auth
 - [ ] Prevent replaying if your tutor already did it
 - [ ] Optimisation, refactor for clarity
+- [ ] Audio Engine for SFX & BGM
 - [ ] Playtesting, push to prod (netlify with custom domain)
 
 ## License
