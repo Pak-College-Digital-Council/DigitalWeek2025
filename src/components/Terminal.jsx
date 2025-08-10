@@ -312,6 +312,12 @@ const Terminal = ({ onClose }) => {
     }
   }, [isInputDisabled]);
 
+  const handleTerminalClick = useCallback(() => {
+    if (!isInputDisabled && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isInputDisabled]);
+
   useEffect(() => {
     if (terminalBodyRef.current) {
       terminalBodyRef.current.scrollTop = terminalBodyRef.current.scrollHeight;
@@ -336,7 +342,7 @@ const Terminal = ({ onClose }) => {
             <button class="terminal-btn close" onClick={onClose}></button>
           </div>
         </div>
-        <div class="terminal-body" ref={terminalBodyRef}>
+        <div class="terminal-body" ref={terminalBodyRef} onClick={handleTerminalClick}>
           <p>Loading Quest...</p>
         </div>
       </div>
