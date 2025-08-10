@@ -1,9 +1,9 @@
-/* global steyeles */
+
 @import url('https://rsms.me/inter/inter.css');
 
 :root {
   font-family: Inter, sans-serif;
-  font-feature-settings: 'liga' 1, 'calt' 1; /* fix for Chrome */
+  font-feature-settings: 'liga' 1, 'calt' 1;
 }
 
 @supports (font-variation-settings: normal) {
@@ -12,14 +12,14 @@
 
 body {
   margin: 0;
-  font-family: 'Inter', sans-serif; 
-  background-color: #000; 
+  font-family: 'Inter', sans-serif;
+  background-color: #000;
   color: white;
-  overflow: hidden; 
+  overflow: hidden;
   font-weight: 400;
 
-  font-variant-numeric: slashed-zero; 
-  -moz-font-feature-settings: "zero" on; 
+  font-variant-numeric: slashed-zero;
+  -moz-font-feature-settings: "zero" on;
   -webkit-font-feature-settings: "zero" on;
   font-feature-settings: "zero" on;
 }

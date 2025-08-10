@@ -1,17 +1,19 @@
 import { createContext } from 'preact';
-import { useState, useCallback, useEffect, useMemo } from 'preact/hooks';
+import { useState, useCallback, useEffect, useMemo, useContext } from 'preact/hooks';
 import { getQuestDataByDay } from '../config/quests';
-import { ACTIVE_DAY } from '../config/globalConfig';
+import { ACTIVE_DAY, DEV_SKIP_TO_FINALE, FORM_SUBMIT_URL } from '../config/globalConfig';
+import { GameSessionContext } from './GameSessionContext';
 
 export const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
+  const gameSession = useContext(GameSessionContext);
   const [currentDay, setCurrentDay] = useState(ACTIVE_DAY);
   const [clippyMessages, setClippyMessages] = useState([]);
   const [persistentClippyMessages, setPersistentClippyMessages] = useState([]);
   const [highlightedIconDay, setHighlightedIconDay] = useState(null);
-  const [challengeCompletion, setChallengeCompletion] = useState({});
-  const [finaleMode, setFinaleMode] = useState(false);
+  const [challengeCompletion, setChallengeCompletion] = useState(DEV_SKIP_TO_FINALE ? { 1: true, 2: true, 3: true } : {});
+  const [finaleMode, setFinaleMode] = useState(DEV_SKIP_TO_FINALE);
   const [showGlitchEffect, setShowGlitchEffect] = useState(false);
 
 
@@ -34,9 +36,31 @@ export const AppProvider = ({ children }) => {
   }, []);
 
 
-  const completeChallenge = useCallback((dayId) => {
+  const completeChallenge = useCallback(async (dayId) => {
     setChallengeCompletion(prev => ({ ...prev, [dayId]: true }));
+    
+
+    gameSession.completeDay(dayId);
+    
+
+    await gameSession.submitFormData(dayId, FORM_SUBMIT_URL);
+    
+
+  }, [gameSession]);
+
+  const triggerDayComplete = useCallback((dayId) => {
+    if (window.onDayComplete) {
+      window.onDayComplete(dayId);
+    }
   }, []);
+
+  const incrementIncorrectCount = useCallback((dayId) => {
+    gameSession.incrementIncorrectCount(dayId);
+  }, [gameSession]);
+
+  const startDayTracking = useCallback((dayId) => {
+    gameSession.startDay(dayId);
+  }, [gameSession]);
 
 
 
@@ -66,6 +90,9 @@ export const AppProvider = ({ children }) => {
     triggerHighlightTerminalIcon,
     challengeCompletion,
     completeChallenge,
+    incrementIncorrectCount,
+    startDayTracking,
+    triggerDayComplete,
     finaleMode,
     startFinaleSequence,
     showGlitchEffect,

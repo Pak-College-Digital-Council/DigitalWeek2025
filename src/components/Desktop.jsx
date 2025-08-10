@@ -9,20 +9,21 @@ import FinaleTerminal from './FinaleTerminal';
 import GlitchEffect from './GlitchEffect';
 import Clippy from './Clippy';
 import { AppContext } from '../context/AppContext';
-import { quests as allQuests } from '../config/quests';
+import { quests as allQuests, desktopMessages } from '../config/quests';
+import { DEV_SKIP_TO_FINALE } from '../config/globalConfig';
 import './Desktop.css';
 
 const defaultTerminalSize = { width: 800, height: 500 };
 const defaultFileExplorerSize = { width: 700, height: 550 };
-const defaultEmailClientSize = { width: 1170, height: 650 }; 
+const defaultEmailClientSize = { width: 1170, height: 650 };
 
-const Desktop = ({ onLogout }) => {
+const Desktop = ({ onLogout, onDayComplete }) => {
   const {
     clippyMessages,
     showClippyMessages,
     completeClippyMessages,
     highlightedIconDay,
-    triggerHighlightTerminalIcon, 
+    triggerHighlightTerminalIcon,
     challengeCompletion,
     currentDay,
     currentQuestData,
@@ -30,6 +31,7 @@ const Desktop = ({ onLogout }) => {
     startFinaleSequence,
     showGlitchEffect,
     triggerGlitchEffect,
+    startDayTracking,
   } = useContext(AppContext);
 
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -48,9 +50,9 @@ const Desktop = ({ onLogout }) => {
     y: (window.innerHeight - defaultFileExplorerSize.height) / 2 + 30,
   });
 
-  const [isEmailClientOpen, setIsEmailClientOpen] = useState(false); 
-  const [emailClientSize, setEmailClientSize] = useState(defaultEmailClientSize); 
-  const [emailClientPosition, setEmailClientPosition] = useState({ 
+  const [isEmailClientOpen, setIsEmailClientOpen] = useState(false);
+  const [emailClientSize, setEmailClientSize] = useState(defaultEmailClientSize);
+  const [emailClientPosition, setEmailClientPosition] = useState({
     x: (window.innerWidth - defaultEmailClientSize.width) / 2 + 60,
     y: (window.innerHeight - defaultEmailClientSize.height) / 2 + 60,
   });
@@ -68,72 +70,74 @@ const Desktop = ({ onLogout }) => {
 
 
   useEffect(() => {
+    window.onDayComplete = onDayComplete;
+    window.triggerDayComplete = (dayId) => {
+      if (onDayComplete) {
+        onDayComplete(dayId);
+      }
+    };
+    return () => {
+      delete window.onDayComplete;
+      delete window.triggerDayComplete;
+    };
+  }, [onDayComplete]);
+
+
+  useEffect(() => {
     setMainAppOpenedThisSession(false);
     setHasWelcomeScriptBeenShown(false);
     setIsTerminalOpen(false);
     setIsFileExplorerOpen(false);
-    setIsEmailClientOpen(false); 
+    setIsEmailClientOpen(false);
   }, [currentDay]);
 
   const createWelcomeScript = useCallback(() => {
-    if (currentDay === 1) {
-      return [
-        { text: "Hey there! Looks like you made it inside.", interactive: true },
-        { text: "My name is C.L.I.P.P.Y. — your Companion and Logistical Interface for Player Progression. You can just call me Clippy.", interactive: true },
-        { text: "L0GIC's system is tough to crack. To get to the core, we first need to pass a 'human verification' test.", interactive: true },
-        {
-          text: "I'm pretty sure we can run this in the Terminal app on the desktop. I'll point it out for you. Double-click it when you're ready to start!",
-          interactive: true,
-          onComplete: () => triggerHighlightTerminalIcon(1),
-        },
-      ];
-    } else if (currentDay === 2) {
-      return [
-        { text: "Welcome back, agents!", interactive: true },
-        { text: "It looks like there's a new application on your desktop for today's task.", interactive: true },
-        { text: "I'm highlighting it now – let's see what L0GIC has in store for us!", interactive: true },
-        {
-          text: "Double-click the highlighted icon when you're set.",
-          interactive: true,
-          onComplete: () => triggerHighlightTerminalIcon(2),
-        },
-      ];
-    } else if (currentDay === 3) {
-      
-      const desktopIntroMessages = currentQuestData?.clippyMessages?.desktopIntro;
-      const day3DesktopIntro = Array.isArray(desktopIntroMessages) && desktopIntroMessages.length > 0 ? [...desktopIntroMessages] : [];
+    if (desktopMessages[currentDay]) {
+      const messages = [...desktopMessages[currentDay]];
 
-      if (day3DesktopIntro.length > 0) {
-        const lastMessage = day3DesktopIntro[day3DesktopIntro.length - 1];
-        const existingOnComplete = typeof lastMessage.onComplete === 'function' ? lastMessage.onComplete : null;
+
+      if (messages.length > 0) {
+        const lastMessage = messages[messages.length - 1];
+        const existingOnComplete = lastMessage.onComplete;
 
         lastMessage.onComplete = () => {
-          if (typeof triggerHighlightTerminalIcon === 'function') {
-            triggerHighlightTerminalIcon(3); 
-          }
-          if (existingOnComplete) { 
-            existingOnComplete();
-          }
+          if (existingOnComplete) existingOnComplete();
+          triggerHighlightTerminalIcon(currentDay);
         };
       }
-      
-      return day3DesktopIntro.length > 0 ? day3DesktopIntro : [{text: "Loading Day 3...", interactive:false}];
+
+      return messages;
     }
+
     return [
-        { text: "Welcome! Systems are ready.", interactive: true },
-        { text: `Current objective: ${currentQuestData?.title || 'Pending assignment...'}`, interactive: true }
+      { text: "Welcome! Systems are ready.", interactive: true, clippyImage: "/clippy/thinking.png" },
+      { text: `Current objective: ${currentQuestData?.title || 'Pending assignment...'}`, interactive: true, clippyImage: "/clippy/thinking.png" }
     ];
-  }, [triggerHighlightTerminalIcon, currentDay, currentQuestData]); 
+  }, [triggerHighlightTerminalIcon, currentDay, currentQuestData]);
 
   useEffect(() => {
     if (!hasWelcomeScriptBeenShown && clippyMessages.length === 0 && !mainAppOpenedThisSession) {
-        const timer = setTimeout(() => {
-            showClippyMessages(createWelcomeScript());
-            setHasWelcomeScriptBeenShown(true);
-        }, 1000);
-        return () => clearTimeout(timer);
+      const timer = setTimeout(() => {
+        if (DEV_SKIP_TO_FINALE && finaleMode) {
+          const finaleMessages = [...desktopMessages.finale];
+          if (finaleMessages.length > 0) {
+            const lastMessage = finaleMessages[finaleMessages.length - 1];
+            const existingOnComplete = lastMessage.onComplete;
+            
+            lastMessage.onComplete = () => {
+              if (existingOnComplete) existingOnComplete();
+              triggerHighlightTerminalIcon('finale');
+            };
+          }
+          showClippyMessages(finaleMessages);
+        } else {
+          showClippyMessages(createWelcomeScript());
+        }
+        setHasWelcomeScriptBeenShown(true);
+      }, 1000);
+      return () => clearTimeout(timer);
     }
-  }, [hasWelcomeScriptBeenShown, createWelcomeScript, showClippyMessages, clippyMessages, mainAppOpenedThisSession]);
+  }, [hasWelcomeScriptBeenShown, createWelcomeScript, showClippyMessages, clippyMessages, mainAppOpenedThisSession, finaleMode, triggerHighlightTerminalIcon]);
 
 
 
@@ -144,12 +148,15 @@ const Desktop = ({ onLogout }) => {
 
   const handleOpenMainApp = () => {
     if (challengeCompletion[currentDay]) {
-        showClippyMessages([{text: `You've already completed Day ${currentDay}'s task! Excellent work.`, interactive:true}]);
-        return;
+      showClippyMessages(desktopMessages.completed);
+      return;
     }
     completeClippyMessages();
     triggerHighlightTerminalIcon(null);
     setMainAppOpenedThisSession(true);
+
+
+    startDayTracking(currentDay);
 
     if (currentDay === 1 && currentQuestData?.type === 'trivia') {
       const newX = (window.innerWidth - defaultTerminalSize.width) / 2;
@@ -163,7 +170,7 @@ const Desktop = ({ onLogout }) => {
       setFileExplorerPosition({ x: newX, y: newY });
       setFileExplorerSize(defaultFileExplorerSize);
       setIsFileExplorerOpen(true);
-    } else if (currentDay === 3 && currentQuestData?.type === 'email_phishing') { 
+    } else if (currentDay === 3 && currentQuestData?.type === 'email_phishing') {
       const newX = (window.innerWidth - defaultEmailClientSize.width) / 2;
       const newY = (window.innerHeight - defaultEmailClientSize.height) / 2;
       setEmailClientPosition({ x: newX, y: newY });
@@ -171,19 +178,27 @@ const Desktop = ({ onLogout }) => {
       setIsEmailClientOpen(true);
     }
   };
-  
+
   const handleCloseTerminal = useCallback(() => setIsTerminalOpen(false), []);
   const handleCloseFileExplorer = useCallback(() => setIsFileExplorerOpen(false), []);
   const handleCloseEmailClient = useCallback(() => {
     setIsEmailClientOpen(false);
     if (challengeCompletion[3]) {
       startFinaleSequence();
-      showClippyMessages([
-        { text: "Now that we have the three clues, we can finally put an end to L0GIC!", interactive: true },
-        { text: "First, let's open the terminal again.", interactive: true, onComplete: () => {
+      const finaleMessages = [...desktopMessages.finale];
+
+
+      if (finaleMessages.length > 0) {
+        const lastMessage = finaleMessages[finaleMessages.length - 1];
+        const existingOnComplete = lastMessage.onComplete;
+
+        lastMessage.onComplete = () => {
+          if (existingOnComplete) existingOnComplete();
           triggerHighlightTerminalIcon('finale');
-        }}
-      ]);
+        };
+      }
+
+      showClippyMessages(finaleMessages);
     }
   }, [challengeCompletion, startFinaleSequence, showClippyMessages, triggerHighlightTerminalIcon]);
 
@@ -191,13 +206,15 @@ const Desktop = ({ onLogout }) => {
 
   const handleOpenFinaleTerminal = useCallback(() => {
     if (finaleMode) {
+      startDayTracking('finale');
+      
       const newX = (window.innerWidth - defaultTerminalSize.width) / 2;
       const newY = (window.innerHeight - defaultTerminalSize.height) / 2;
       setCommandTerminalPosition({ x: newX, y: newY });
       setCommandTerminalSize(defaultTerminalSize);
       setIsCommandTerminalOpen(true);
     }
-  }, [finaleMode]);
+  }, [finaleMode, startDayTracking]);
 
   const handleGlitchComplete = useCallback(() => {
     setIsCommandTerminalOpen(false);
@@ -205,7 +222,7 @@ const Desktop = ({ onLogout }) => {
     setIsFileExplorerOpen(false);
     setIsEmailClientOpen(false);
     setShowFinaleTerminal(true);
-  }, []); 
+  }, []);
 
 
 
@@ -226,7 +243,7 @@ const Desktop = ({ onLogout }) => {
 
   const day1QuestStaticInfo = allQuests[1];
   const isDay1Complete = challengeCompletion[1];
-  
+
   const isDay1IconDisabled = currentDay !== 1 || isDay1Complete || (currentDay === 1 && isTerminalOpen);
   const isDay1IconHighlighted = currentDay === 1 && highlightedIconDay === 1 && !isDay1IconDisabled;
 
@@ -235,19 +252,19 @@ const Desktop = ({ onLogout }) => {
       class={`icon ${isDay1IconHighlighted ? 'highlight-icon' : ''} ${isDay1IconDisabled ? 'disabled-icon' : ''}`}
       onDblClick={() => {
         if (currentDay === 1 && !isDay1IconDisabled) handleOpenMainApp();
-        
+
       }}
       title={
         isDay1Complete ? `Day 1 Completed: ${day1QuestStaticInfo.title}` :
-        (currentDay === 1 && isTerminalOpen) ? `${day1QuestStaticInfo.title} (Open)` :
-        (currentDay === 1 ? day1QuestStaticInfo.title : `${day1QuestStaticInfo.title} (Inactive)`)
+          (currentDay === 1 && isTerminalOpen) ? `${day1QuestStaticInfo.title} (Open)` :
+            (currentDay === 1 ? day1QuestStaticInfo.title : `${day1QuestStaticInfo.title} (Inactive)`)
       }
     >
-      <img src="/icons/terminal.svg" alt={day1QuestStaticInfo.title || "Terminal"} style={{filter: isDay1IconDisabled ? 'grayscale(80%) opacity(0.6)' : ''}} />
+      <img src="/icons/terminal.svg" alt={day1QuestStaticInfo.title || "Terminal"} style={{ filter: isDay1IconDisabled ? 'grayscale(80%) opacity(0.6)' : '' }} />
       <span>{day1QuestStaticInfo.title || "Terminal"}</span>
     </div>
   ) : null;
-  
+
   const day2QuestStaticInfo = allQuests[2];
   const isDay2Complete = challengeCompletion[2];
   const isDay2IconDisabled = currentDay !== 2 || isDay2Complete || (currentDay === 2 && isFileExplorerOpen);
@@ -261,33 +278,36 @@ const Desktop = ({ onLogout }) => {
       }}
       title={
         isDay2Complete ? `Day 2 Completed: ${day2QuestStaticInfo.title}` :
-        (currentDay === 2 && isFileExplorerOpen) ? `${day2QuestStaticInfo.title} (Open)` :
-        (currentDay === 2 ? day2QuestStaticInfo.title : `${day2QuestStaticInfo.title} (Inactive)`)
+          (currentDay === 2 && isFileExplorerOpen) ? `${day2QuestStaticInfo.title} (Open)` :
+            (currentDay === 2 ? day2QuestStaticInfo.title : `${day2QuestStaticInfo.title} (Inactive)`)
       }
     >
-      <img src="/icons/folder.svg" alt={day2QuestStaticInfo.title || "File Explorer"} style={{filter: isDay2IconDisabled ? 'grayscale(80%) opacity(0.6)' : ''}} />
+      <img src="/icons/folder.svg" alt={day2QuestStaticInfo.title || "File Explorer"} style={{ filter: isDay2IconDisabled ? 'grayscale(80%) opacity(0.6)' : '' }} />
       <span>{day2QuestStaticInfo.title || "File Explorer"}</span>
     </div>
   ) : null;
 
-  let Day3EmailClientIcon = null;
-  if (currentDay === 3 && currentQuestData && currentQuestData.type === 'email_phishing') {
-    const isDay3Complete = challengeCompletion[3];
-    const iconDisabled = isDay3Complete || isEmailClientOpen;
-    const iconLabel = currentQuestData.title || "Email Client";
-    const iconPath = "/icons/email.svg"; 
+  const day3QuestStaticInfo = allQuests[3];
+  const isDay3Complete = challengeCompletion[3];
+  const isDay3IconDisabled = currentDay !== 3 || isDay3Complete || (currentDay === 3 && isEmailClientOpen);
+  const isDay3IconHighlighted = currentDay === 3 && highlightedIconDay === 3 && !isDay3IconDisabled;
 
-    Day3EmailClientIcon = (
-      <div
-        class={`icon ${highlightedIconDay === 3 && !iconDisabled ? 'highlight-icon' : ''} ${iconDisabled ? 'disabled-icon' : ''}`}
-        onDblClick={!iconDisabled ? handleOpenMainApp : null}
-        title={isDay3Complete ? `${iconLabel} (Completed)` : (isEmailClientOpen ? `${iconLabel} (Open)` : iconLabel)}
-      >
-        <img src={iconPath} alt={iconLabel} style={{filter: iconDisabled ? 'grayscale(80%) opacity(0.6)' : ''}}/>
-        <span>{iconLabel}</span>
-      </div>
-    );
-  }
+  const Day3EmailClientIcon = day3QuestStaticInfo ? (
+    <div
+      class={`icon ${isDay3IconHighlighted ? 'highlight-icon' : ''} ${isDay3IconDisabled ? 'disabled-icon' : ''}`}
+      onDblClick={() => {
+        if (currentDay === 3 && !isDay3IconDisabled) handleOpenMainApp();
+      }}
+      title={
+        isDay3Complete ? `Day 3 Completed: ${day3QuestStaticInfo.title}` :
+          (currentDay === 3 && isEmailClientOpen) ? `${day3QuestStaticInfo.title} (Open)` :
+            (currentDay === 3 ? day3QuestStaticInfo.title : `${day3QuestStaticInfo.title} (Inactive)`)
+      }
+    >
+      <img src="/icons/email.svg" alt={day3QuestStaticInfo.title || "EMails"} style={{ filter: isDay3IconDisabled ? 'grayscale(80%) opacity(0.6)' : '' }} />
+      <span>{day3QuestStaticInfo.title || "EMails"}</span>
+    </div>
+  ) : null;
 
   let FinaleTerminalIcon = null;
   if (finaleMode) {
@@ -300,7 +320,7 @@ const Desktop = ({ onLogout }) => {
         onDblClick={!iconDisabled ? handleOpenFinaleTerminal : null}
         title={iconDisabled ? "Terminal (Open)" : "Terminal"}
       >
-        <img src="/icons/terminal.svg" alt="Terminal" style={{filter: iconDisabled ? 'grayscale(80%) opacity(0.6)' : ''}} />
+        <img src="/icons/terminal.svg" alt="Terminal" style={{ filter: iconDisabled ? 'grayscale(80%) opacity(0.6)' : '' }} />
         <span>Terminal</span>
       </div>
     );
@@ -310,15 +330,35 @@ const Desktop = ({ onLogout }) => {
     <div class="desktop-wrapper">
       {showGlitchEffect && <GlitchEffect onComplete={handleGlitchComplete} />}
       {showFinaleTerminal && <FinaleTerminal />}
-      
+
       <div class="desktop-background">
         <div class="desktop-icons">
           {!finaleMode && Day1TerminalIcon}
-          {!finaleMode && Day2FileExplorerIcon}
-          {!finaleMode && currentDay === 3 && Day3EmailClientIcon}
+          {!finaleMode ? Day2FileExplorerIcon : (
+            day2QuestStaticInfo && (
+              <div
+                class="icon disabled-icon"
+                title={`${day2QuestStaticInfo.title} (Inactive)`}
+              >
+                <img src="/icons/folder.svg" alt={day2QuestStaticInfo.title || "File Explorer"} style={{ filter: 'grayscale(80%) opacity(0.6)' }} />
+                <span>{day2QuestStaticInfo.title || "File Explorer"}</span>
+              </div>
+            )
+          )}
+          {!finaleMode ? Day3EmailClientIcon : (
+            day3QuestStaticInfo && (
+              <div
+                class="icon disabled-icon"
+                title={`${day3QuestStaticInfo.title} (Inactive)`}
+              >
+                <img src="/icons/email.svg" alt={day3QuestStaticInfo.title || "EMails"} style={{ filter: 'grayscale(80%) opacity(0.6)' }} />
+                <span>{day3QuestStaticInfo.title || "EMails"}</span>
+              </div>
+            )
+          )}
           {FinaleTerminalIcon}
         </div>
-        
+
         {isTerminalOpen && currentDay === 1 && currentQuestData?.type === 'trivia' && (
           <Rnd size={terminalSize} position={terminalPosition} onDragStop={(e, d) => setTerminalPosition({ x: d.x, y: d.y })} onResizeStop={(e, direction, ref, delta, position) => { setTerminalSize({ width: ref.style.width, height: ref.style.height }); setTerminalPosition(position); }} minWidth={500} minHeight={300} dragHandleClassName="terminal-header" className="terminal-rnd-wrapper" default={{ ...defaultTerminalSize, ...terminalPosition }} enableResizing={true} >
             <Terminal onClose={handleCloseTerminal} />
@@ -326,13 +366,13 @@ const Desktop = ({ onLogout }) => {
         )}
 
         {isFileExplorerOpen && currentDay === 2 && currentQuestData?.type === 'file_sort' && (
-           <Rnd size={fileExplorerSize} position={fileExplorerPosition} onDragStop={(e,d) => setFileExplorerPosition({x:d.x, y:d.y})} onResizeStop={(e,direction,ref,delta,position)=>{setFileExplorerSize({width:ref.style.width,height:ref.style.height}); setFileExplorerPosition(position);}} minWidth={600} minHeight={450} dragHandleClassName="title-bar" className="file-explorer-rnd-wrapper" default={{...defaultFileExplorerSize, ...fileExplorerPosition}} enableResizing={true}>
+          <Rnd size={fileExplorerSize} position={fileExplorerPosition} onDragStop={(e, d) => setFileExplorerPosition({ x: d.x, y: d.y })} onResizeStop={(e, direction, ref, delta, position) => { setFileExplorerSize({ width: ref.style.width, height: ref.style.height }); setFileExplorerPosition(position); }} minWidth={600} minHeight={450} dragHandleClassName="title-bar" className="file-explorer-rnd-wrapper" default={{ ...defaultFileExplorerSize, ...fileExplorerPosition }} enableResizing={true}>
             <FileExplorer questData={currentQuestData} onClose={handleCloseFileExplorer} />
           </Rnd>
         )}
 
         {isEmailClientOpen && currentDay === 3 && currentQuestData?.type === 'email_phishing' && (
-           <Rnd size={emailClientSize} position={emailClientPosition} onDragStop={(e,d) => setEmailClientPosition({x:d.x, y:d.y})} onResizeStop={(e,direction,ref,delta,position)=>{setEmailClientSize({width:ref.style.width,height:ref.style.height}); setEmailClientPosition(position);}} minWidth={700} minHeight={500} dragHandleClassName="rnd-drag-handle" className="email-client-rnd-wrapper" default={{...defaultEmailClientSize, ...emailClientPosition}} enableResizing={true}> 
+          <Rnd size={emailClientSize} position={emailClientPosition} onDragStop={(e, d) => setEmailClientPosition({ x: d.x, y: d.y })} onResizeStop={(e, direction, ref, delta, position) => { setEmailClientSize({ width: ref.style.width, height: ref.style.height }); setEmailClientPosition(position); }} minWidth={700} minHeight={500} dragHandleClassName="rnd-drag-handle" className="email-client-rnd-wrapper" default={{ ...defaultEmailClientSize, ...emailClientPosition }} enableResizing={true}>
             <EmailClient questData={currentQuestData} onClose={handleCloseEmailClient} />
           </Rnd>
         )}

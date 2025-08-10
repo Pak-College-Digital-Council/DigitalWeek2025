@@ -11,7 +11,7 @@ const ClassroomNoticeEmail = () => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Classroom Notification</title>
   <style>
-    .classroom-email-body-wrapper { /* Scoped body styles */
+    .classroom-email-body-wrapper {
       font-family: Roboto, Helvetica, Arial, sans-serif;
       margin: 0;
       padding: 0;
@@ -33,7 +33,7 @@ const ClassroomNoticeEmail = () => {
       cursor: default;
     }
 
-    /* Layout */
+
     .container {
       background-color: #ffffff;
       max-width: 632px;
@@ -240,7 +240,7 @@ const ClassroomNoticeEmail = () => {
     }
   </style>
 </head>
-<div class="classroom-email-body-wrapper"> <!-- Replaced body tag -->
+<div class="classroom-email-body-wrapper">
   <table class="container" cellpadding="0" cellspacing="0" dir="ltr" role="presentation">
     <tbody>
       <tr>

@@ -1,0 +1,50 @@
+.shutdown-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity 1s ease-in-out;
+}
+
+.shutdown-screen.fading {
+  opacity: 0;
+  animation: fadeIn 1s ease-in-out forwards;
+}
+
+.shutdown-screen.loading {
+  opacity: 1;
+}
+
+.shutdown-screen.black {
+  opacity: 1;
+  background-color: #000;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.shutdown-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: white;
+}
+
+.shutdown-message {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.2em;
+  margin-bottom: 30px;
+  color: #e0e0e0;
+}

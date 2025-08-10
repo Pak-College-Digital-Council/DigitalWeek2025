@@ -3,12 +3,13 @@ import { AppContext } from '../context/AppContext';
 import './Terminal.css';
 
 const CommandTerminal = ({ onClose }) => {
-    const { showClippyMessages, showPersistentClippyMessages, clearPersistentClippyMessages, triggerGlitchEffect } = useContext(AppContext);
+    const { showClippyMessages, showPersistentClippyMessages, clearPersistentClippyMessages, triggerGlitchEffect, incrementIncorrectCount, completeChallenge } = useContext(AppContext);
     const [input, setInput] = useState('');
     const [output, setOutput] = useState([]);
     const [isWaitingForCommand, setIsWaitingForCommand] = useState(true);
     const [inputEnabled, setInputEnabled] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isPasswordMode, setIsPasswordMode] = useState(false);
     const inputRef = useRef(null);
 
     useEffect(() => {
@@ -75,8 +76,9 @@ const CommandTerminal = ({ onClose }) => {
                     setTimeout(() => {
                         triggerGlitchEffect();
                     }, 1800);
-                }, 3700); // 2s + 0.5s + 1s
+                }, 3700);
             } else {
+                incrementIncorrectCount('finale');
                 setOutput(prev => [...prev,
                 { type: 'error', text: 'bash: command not found: ' + command },
                 { type: 'output', text: 'Please try again.' }
@@ -88,6 +90,24 @@ const CommandTerminal = ({ onClose }) => {
 
     const handleInputChange = (e) => {
         setInput(e.target.value);
+    };
+
+    const handleKeyDown = (e) => {
+
+        if (e.ctrlKey && e.key === 'v') {
+            e.preventDefault();
+            navigator.clipboard.readText().then(text => {
+                setInput(prev => prev + text);
+            }).catch(err => {
+
+            });
+        }
+
+
+        if (e.ctrlKey && e.shiftKey && e.key === 'P') {
+            e.preventDefault();
+            setIsPasswordMode(prev => !prev);
+        }
     };
 
     return (
@@ -113,20 +133,50 @@ const CommandTerminal = ({ onClose }) => {
                 {isWaitingForCommand && (
                     <div className="terminal-input-line">
                         <span className="terminal-prompt">$ </span>
-                        <input
-                            ref={inputRef}
-                            type="text"
-                            value={input}
-                            onChange={inputEnabled ? handleInputChange : undefined}
-                            onKeyPress={inputEnabled ? handleKeyPress : undefined}
-                            className="terminal-input"
-                            disabled={!inputEnabled}
-                            autoFocus={inputEnabled}
-                            spellCheck="false"
-                            autoComplete="off"
-                            autoCorrect="off"
-                            autoCapitalize="off"
-                        />
+                        <div className="terminal-input-container">
+                            <input
+                                ref={inputRef}
+                                type="text"
+                                value={input}
+                                onChange={inputEnabled ? handleInputChange : undefined}
+                                onKeyPress={inputEnabled ? handleKeyPress : undefined}
+                                onKeyDown={inputEnabled ? handleKeyDown : undefined}
+                                className={`terminal-input ${isPasswordMode ? 'password-hidden' : ''}`}
+                                disabled={!inputEnabled}
+                                autoFocus={inputEnabled}
+                                spellCheck="false"
+                                autoComplete="off"
+                                autoCorrect="off"
+                                autoCapitalize="off"
+                                style={isPasswordMode ? {
+                                    color: 'transparent',
+                                    textShadow: '0 0 0 #e0e0e0',
+                                    caretColor: '#e0e0e0'
+                                } : {}}
+                            />
+                            {isPasswordMode && (
+                                <div className="password-mask" style={{
+                                    position: 'absolute',
+                                    left: '0',
+                                    top: '0',
+                                    pointerEvents: 'none',
+                                    color: '#e0e0e0',
+                                    fontFamily: 'MorePerfectDOSVGA, Courier New, monospace',
+                                    fontSize: 'inherit'
+                                }}>
+                                    {'*'.repeat(input.length)}
+                                </div>
+                            )}
+                        </div>
+                        {isPasswordMode && (
+                            <span className="password-indicator" style={{
+                                color: '#f7b32b',
+                                fontSize: '0.8em',
+                                marginLeft: '8px'
+                            }}>
+                                [MASKED]
+                            </span>
+                        )}
                     </div>
                 )}
             </div>

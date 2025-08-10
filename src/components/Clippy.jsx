@@ -21,7 +21,7 @@ const Typewriter = ({ text, onTypingComplete }) => {
           clearInterval(timer);
           if (onTypingComplete) onTypingComplete();
         }
-      }, TYPEWRITER_SPEED_MS); // Used constant
+      }, TYPEWRITER_SPEED_MS);
       return () => clearInterval(timer);
     }
   }, [text, onTypingComplete]);
@@ -43,6 +43,13 @@ const Clippy = () => {
     }
     return null;
   }, [clippyMessages, currentMessageIndex, persistentClippyMessages]);
+
+  const getClippyImage = useMemo(() => {
+    if (!currentMessage) return '/clippy/thinking.png';
+    
+
+    return currentMessage.clippyImage || '/clippy/thinking.png';
+  }, [currentMessage]);
 
   const advance = useCallback(() => {
     if (!currentMessage) return;
@@ -115,7 +122,9 @@ const Clippy = () => {
           </div>
         )}
       </div>
-      <div class="clippy-character"></div>
+      <div class="clippy-character">
+        <img src={getClippyImage} alt="Clippy" />
+      </div>
     </div>
   );
 };

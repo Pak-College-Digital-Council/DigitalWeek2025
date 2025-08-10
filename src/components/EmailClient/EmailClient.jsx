@@ -36,6 +36,7 @@ const EmailClient = ({ questData, onClose }) => {
   const {
     showClippyMessages,
     completeChallenge,
+    incrementIncorrectCount,
     currentDay,
     clippyMessages,
     completeClippyMessages: clearPrevClippyMessages,
@@ -126,7 +127,6 @@ const EmailClient = ({ questData, onClose }) => {
   };
 
   const handleProceedClick = () => {
-    // Day 3.2 - Minimize email client and trigger finale sequence
     if (onClose) onClose();
   };
 
@@ -237,28 +237,24 @@ const EmailClient = ({ questData, onClose }) => {
     if (correctlyReportedPhishing.length === 3 && incorrectlyReportedSafe.length === 0) {
 
       clearPrevClippyMessages();
-      setChallengeCompleted(true); // Grey out the report button
+      setChallengeCompleted(true);
 
       completeChallenge(currentDay);
 
       const currentSuccessClippy = questData.clippyMessages?.success || [];
       const congratulationsClippy = questData.clippyMessages?.congratulations || [];
 
-      // Find the message about sending the email and add the onComplete handler
       const finalMessages = [
         ...currentSuccessClippy.map(msg => ({ ...msg, onComplete: msg.onComplete || (() => { }) })),
         ...congratulationsClippy.map((msg, idx) => {
-          // Check if this is the message about sending the email
           if (msg.text && msg.text.includes("I've just sent you an email")) {
             return {
               ...msg,
               onComplete: () => {
-                // Add the success email to inbox when user presses space on this message
                 const successEmail = questData.data.successEmail;
                 setEmails(prevEmails => [successEmail, ...prevEmails.filter(e => e.id !== successEmail.id)]);
                 setActiveEmail(successEmail);
 
-                // Call original onComplete if it existed
                 if (msg.onComplete) msg.onComplete();
               }
             };
@@ -267,10 +263,10 @@ const EmailClient = ({ questData, onClose }) => {
             ...msg,
             onComplete: (idx === congratulationsClippy.length - 1)
               ? () => {
-                // Enable the proceed button after the final message
+                if (msg.onComplete) {
+                  msg.onComplete();
+                }
                 setProceedButtonEnabled(true);
-                // Don't close the email client anymore - let user click Proceed
-                // if (onClose) onClose();
               }
               : (msg.onComplete || (() => { }))
           };
@@ -279,6 +275,7 @@ const EmailClient = ({ questData, onClose }) => {
       showClippyMessages(finalMessages);
 
     } else {
+      incrementIncorrectCount(currentDay);
       let feedbackMessages = [];
       if (incorrectlyReportedSafe.length > 0) {
         feedbackMessages = incorrectlyReportedSafe.map(email => ({
@@ -406,8 +403,8 @@ const EmailClient = ({ questData, onClose }) => {
             </div>
           </div>
 
-          <div className="email-list-and-content-split"> { }
-            <div className="email-list-pane"> { }
+          <div className="email-list-and-content-split">
+            <div className="email-list-pane">
               {emails.map(email => (
                 <div
                   key={email.id}
@@ -442,7 +439,7 @@ const EmailClient = ({ questData, onClose }) => {
               ))}
             </div>
 
-            <div className="email-content-pane" ref={emailContentPaneRef}> { }
+            <div className="email-content-pane" ref={emailContentPaneRef}>
               {activeEmail ? (
                 <Fragment>
                   <div className="email-content-header">

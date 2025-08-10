@@ -1,4 +1,4 @@
-/* please dont look at this file if you know whats good for you <3 */
+
 
 .email-client-window {
   --fe-bg-color-terminal: rgba(10, 10, 20, 0.85);
@@ -1057,7 +1057,7 @@
   display: none;
 }
 
-/* --- ClippySuccessEmail Styling --- */
+
 .clippy-success-email {
   background-color: var(--email-background-main);
   color: var(--email-text-primary);
@@ -1088,7 +1088,7 @@
   background-color: rgba(74, 222, 128, 0.1);
 }
 
-/* Proceed Button - styled like report phishing button */
+
 .proceed-btn {
   background-color: var(--fe-accent-color-terminal);
   color: var(--email-text-on-accent);
@@ -1118,8 +1118,7 @@
   border-color: rgba(74, 74, 94, 0.5);
   color: #666;
   cursor: not-allowed;
-}/* Disable
-d hint toggle styling */
+}
 .hint-toggle-label.disabled {
   opacity: 0.5;
   cursor: not-allowed;

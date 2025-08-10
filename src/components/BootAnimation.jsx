@@ -1,22 +1,28 @@
 import { h } from 'preact';
-import { useState, useEffect, useCallback } from 'preact/hooks';
+import { useState, useEffect, useCallback, useContext } from 'preact/hooks';
+import { PARTICIPANT_CODES, ACTIVE_DAY } from '../config/globalConfig';
+import { GameSessionContext } from '../context/GameSessionContext';
 import './BootAnimation.css';
 
-const initialPromptLine = "Press Enter to start game";
+const initialPromptLine = "Enter the code given to you in the email:";
 const bootSequenceLines = [
   "Booting L0GIC OS...",
-  "Kernel initialisation sequence started...",
+  "Kernel initialization sequence started...",
   "Loading system drivers...",
   "Mounting virtual file systems...",
   "Network interface configured...",
   "Awaiting user authentication...",
 ];
 
-const BootAnimation = ({ onBootComplete }) => {
+const BootAnimation = ({ onBootComplete, completedDays }) => {
+  const { setParticipant } = useContext(GameSessionContext);
   const [displayedLines, setDisplayedLines] = useState([initialPromptLine]);
   const [currentLineIndex, setCurrentLineIndex] = useState(-1);
   const [showCursor, setShowCursor] = useState(true);
   const [gameStarted, setGameStarted] = useState(false);
+  const [authStage, setAuthStage] = useState('input');
+  const [codeInput, setCodeInput] = useState('');
+  const [shakeScreen, setShakeScreen] = useState(false);
 
   useEffect(() => {
     const cursorTimer = setInterval(() => {
@@ -26,21 +32,66 @@ const BootAnimation = ({ onBootComplete }) => {
   }, []);
 
   const handleKeyPress = useCallback((event) => {
-    if (event.key === 'Enter' && !gameStarted) {
-      setGameStarted(true);
-      setDisplayedLines([]);
-      setCurrentLineIndex(0);
+    if (authStage === 'input') {
+      if (event.key === 'Enter') {
+        const trimmedCode = codeInput.trim();
+        if (PARTICIPANT_CODES[trimmedCode]) {
+          if (completedDays && completedDays.has(ACTIVE_DAY)) {
+            setDisplayedLines([
+              initialPromptLine, 
+              `> ${'*'.repeat(trimmedCode.length)}`, 
+              "ACCEPTED", 
+              "", 
+              "You have already completed today's challenge!",
+              "Come back tomorrow for the next challenge!",
+              "",
+              "Press Enter to continue"
+            ]);
+            setAuthStage('completed');
+          } else {
+            setParticipant(trimmedCode, PARTICIPANT_CODES[trimmedCode]);
+            setAuthStage('accepted');
+            setDisplayedLines([initialPromptLine, `> ${'*'.repeat(trimmedCode.length)}`, "ACCEPTED", "", "Press Enter to continue"]);
+          }
+        } else {
+          setShakeScreen(true);
+          setCodeInput('');
+          setTimeout(() => setShakeScreen(false), 500);
+        }
+      } else if (event.key === 'Backspace') {
+        setCodeInput(prev => prev.slice(0, -1));
+      } else if (event.ctrlKey && event.key === 'v') {
+        event.preventDefault();
+        navigator.clipboard.readText().then(text => {
+          const cleanText = text.trim().replace(/[^0-9]/g, '').slice(0, 6);
+          setCodeInput(cleanText);
+        }).catch(err => {
+        });
+      } else if (event.key.length === 1 && /[0-9]/.test(event.key) && codeInput.length < 6) {
+        setCodeInput(prev => prev + event.key);
+      }
+    } else if ((authStage === 'accepted' || authStage === 'completed') && event.key === 'Enter') {
+      if (authStage === 'completed') {
+        setAuthStage('input');
+        setCodeInput('');
+        setDisplayedLines([initialPromptLine]);
+      } else {
+        setAuthStage('boot');
+        setGameStarted(true);
+        setDisplayedLines([]);
+        setCurrentLineIndex(0);
+      }
     }
-  }, [gameStarted]);
+  }, [authStage, codeInput, setParticipant]);
 
   useEffect(() => {
-    if (!gameStarted) {
+    if (authStage !== 'boot') {
       window.addEventListener('keydown', handleKeyPress);
       return () => {
         window.removeEventListener('keydown', handleKeyPress);
       };
     }
-  }, [handleKeyPress, gameStarted]);
+  }, [handleKeyPress, authStage]);
 
   useEffect(() => {
     if (gameStarted && currentLineIndex >= 0 && currentLineIndex < bootSequenceLines.length) {
@@ -61,13 +112,13 @@ const BootAnimation = ({ onBootComplete }) => {
   }, [currentLineIndex, gameStarted, onBootComplete]);
 
   return (
-    <div class="boot-animation-container">
+    <div class={`boot-animation-container ${shakeScreen ? 'shake' : ''}`}>
       {displayedLines.map((line, index) => (
         <p key={index}>{line}</p>
       ))}
-      {!gameStarted && (
+      {authStage === 'input' && (
         <p>
-          {"> "}
+          {"> "}{'*'.repeat(codeInput.length)}
           {showCursor ? '_' : ' '}
         </p>
       )}

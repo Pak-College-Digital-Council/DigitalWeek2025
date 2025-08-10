@@ -8,6 +8,7 @@ const Terminal = ({ onClose }) => {
   const {
     showClippyMessages,
     completeChallenge,
+    incrementIncorrectCount,
     currentDay,
   } = useContext(AppContext);
 
@@ -22,6 +23,7 @@ const Terminal = ({ onClose }) => {
   const [incorrectCount, setIncorrectCount] = useState(0);
   const [isShowingPrompt, setIsShowingPrompt] = useState(false);
   const [verifyingText, setVerifyingText] = useState('');
+  const [isPasswordMode, setIsPasswordMode] = useState(false);
 
   const inputRef = useRef(null);
   const terminalBodyRef = useRef(null);
@@ -234,6 +236,7 @@ const Terminal = ({ onClose }) => {
           const incorrectMessages = currentQuestionData.explanation.incorrect;
           const messageToShow = incorrectMessages[incorrectCount % incorrectMessages.length];
           setIncorrectCount(prev => prev + 1);
+          incrementIncorrectCount(currentDay);
           showClippyMessages([{
             text: messageToShow,
             interactive: true,
@@ -258,9 +261,48 @@ const Terminal = ({ onClose }) => {
     }
   };
 
-  const handleInputKeyDown = (e) => {
+  const handleInputChange = (e) => {
+    let value = e.target.value;
+
+    if (isPasswordMode) {
+      setInput(value);
+      return;
+    }
+
+    if (currentQuest.type === "final_confrontation" && gameState === "awaiting_final_input") {
+      setInput(value);
+      return;
+    }
+
+    if (currentQuest.type === "trivia" && gameState === "playing") {
+      const filtered = value.replace(/[^a-zA-Z]/g, '');
+      const finalValue = filtered.length > 0 ? filtered.slice(-1).toUpperCase() : '';
+      setInput(finalValue);
+      return;
+    }
+
+    setInput(value);
+  };
+
+  const handleKeyDown = (e) => {
     if (e.key === ' ') {
       e.stopPropagation();
+    }
+    
+
+    if (e.ctrlKey && e.key === 'v') {
+      e.preventDefault();
+      navigator.clipboard.readText().then(text => {
+        setInput(prev => prev + text.toUpperCase());
+      }).catch(err => {
+
+      });
+    }
+    
+
+    if (e.ctrlKey && e.shiftKey && e.key === 'P') {
+      e.preventDefault();
+      setIsPasswordMode(prev => !prev);
     }
   };
   
@@ -325,17 +367,46 @@ const Terminal = ({ onClose }) => {
         {!isInputDisabled && (
           <form onSubmit={handleInputSubmit} class="terminal-input-form">
             <span class="prompt"></span>
-            <input
-              ref={inputRef}
-              type="text"
-              class="terminal-input"
-              value={input}
-              onInput={(e) => setInput(e.target.value.toUpperCase())}
-              onKeyDown={handleInputKeyDown}
-              disabled={isInputDisabled}
-              maxLength={currentQuest?.type === 'trivia' ? "1" : undefined}
-              autoFocus
-            />
+            <div class="terminal-input-container">
+              <input
+                ref={inputRef}
+                type="text"
+                class={`terminal-input ${isPasswordMode ? 'password-hidden' : ''}`}
+                value={input}
+                onInput={handleInputChange}
+                onKeyDown={handleKeyDown}
+                disabled={isInputDisabled}
+                maxLength={currentQuest?.type === 'trivia' ? "1" : undefined}
+                autoFocus
+                style={isPasswordMode ? {
+                  color: 'transparent',
+                  textShadow: '0 0 0 #e0e0e0',
+                  caretColor: '#e0e0e0'
+                } : {}}
+              />
+              {isPasswordMode && (
+                <div class="password-mask" style={{
+                  position: 'absolute',
+                  left: '0',
+                  top: '0',
+                  pointerEvents: 'none',
+                  color: '#e0e0e0',
+                  fontFamily: 'MorePerfectDOSVGA, Courier New, monospace',
+                  fontSize: 'inherit'
+                }}>
+                  {'*'.repeat(input.length)}
+                </div>
+              )}
+            </div>
+            {isPasswordMode && (
+              <span class="password-indicator" style={{
+                color: '#f7b32b',
+                fontSize: '0.8em',
+                marginLeft: '8px'
+              }}>
+                [MASKED]
+              </span>
+            )}
           </form>
         )}
       </div>

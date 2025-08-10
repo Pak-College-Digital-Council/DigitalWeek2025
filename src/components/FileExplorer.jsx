@@ -5,17 +5,29 @@ import './FileExplorer.css';
 
 const FileIcon = ({ iconType, isGridIcon = false }) => {
   const size = isGridIcon ? "64px" : "20px";
-  let iconSrc = "/icons/file-generic.svg";
+  let iconSrc = "/icons/file-docx.svg";
 
   switch (iconType?.toLowerCase()) {
-    case 'exe': case 'msi':
+    case 'exe':
       iconSrc = "/icons/file-exe.svg";
       break;
-    case 'jpg': case 'jpeg': case 'png':
-      iconSrc = "/icons/file-image.svg";
+    case 'msi':
+      iconSrc = "/icons/file-msi.svg";
       break;
-    case 'py': case 'html':
-      iconSrc = "/icons/file-code.svg";
+    case 'jpg': case 'jpeg': case 'png':
+      iconSrc = "/icons/file-jpg.svg";
+      break;
+    case 'py':
+      iconSrc = "/icons/file-py.svg";
+      break;
+    case 'html':
+      iconSrc = "/icons/file-html.svg";
+      break;
+    case 'docx': case 'doc':
+      iconSrc = "/icons/file-docx.svg";
+      break;
+    case 'txt':
+      iconSrc = "/icons/file-txt.svg";
       break;
   }
 
@@ -40,7 +52,7 @@ const InfoIcon = ({onClick}) => (
 
 
 const FileExplorer = ({ questData, onClose }) => {
-  const { showClippyMessages, completeChallenge, currentDay, clippyMessages, completeClippyMessages: clearPrevClippyMessages } = useContext(AppContext);
+  const { showClippyMessages, completeChallenge, incrementIncorrectCount, currentDay, clippyMessages, completeClippyMessages: clearPrevClippyMessages } = useContext(AppContext);
   const [unsortedFiles, setUnsortedFiles] = useState([]);
   const [safeFiles, setSafeFiles] = useState([]);
   const [suspiciousFiles, setSuspiciousFiles] = useState([]);
@@ -115,9 +127,15 @@ const FileExplorer = ({ questData, onClose }) => {
       if (questData.successClippyMessages && questData.successClippyMessages.length > 0) {
         const messagesWithFinalAction = questData.successClippyMessages.map((msg, i) => {
           if (i === questData.successClippyMessages.length - 1) {
+            const originalOnComplete = msg.onComplete;
             return {
               ...msg,
               onComplete: () => {
+
+                if (originalOnComplete) {
+                  originalOnComplete();
+                }
+
                 setTimeout(() => {
                   if (onClose) onClose();
                 }, 0);
@@ -179,6 +197,7 @@ const FileExplorer = ({ questData, onClose }) => {
       setShowTerminalView(true);
       completeChallenge(currentDay);
     } else {
+      incrementIncorrectCount(currentDay);
       showClippyMessages(questData.feedbackClippyMessages?.incorrectSort || [{ text: "Some files are misplaced. Please review and try again.", interactive: true }]);
     }
   };

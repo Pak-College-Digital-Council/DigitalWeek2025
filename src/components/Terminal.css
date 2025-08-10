@@ -259,3 +259,14 @@
 .terminal-window.loading * {
   cursor: wait;
 }
+
+.terminal-input-container {
+  position: relative;
+  flex-grow: 1;
+}
+
+.terminal-input.password-hidden {
+  color: transparent !important;
+  text-shadow: 0 0 0 #e0e0e0;
+  caret-color: #e0e0e0;
+}

@@ -3,7 +3,7 @@
   height: 100vh;
   background-image: url('/windows-login-bg.jpg');
   background-size: cover;
-  background-position: center;
+  background-position: centre;
   overflow: hidden; 
   position: relative;
 }
@@ -52,7 +52,7 @@
   flex-direction: column;
   align-items: center;
   width: 80px;
-  text-align: center;
+  text-align: centre;
   cursor: pointer;
   padding: 5px;
   border-radius: 5px;
