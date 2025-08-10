@@ -1,7 +1,7 @@
 .desktop-background {
   width: 100vw;
   height: 100vh;
-  background-image: url('/windows-login-bg.jpg');
+  background-image: url('/windows-login-bg.webp');
   background-size: cover;
   background-position: centre;
   overflow: hidden; 
