@@ -2,7 +2,7 @@
 // Day 2: File Sorting Challenge (File Explorer)
 // Day 3: EMails (Email Client)
 // Day 3.5: Finale Terminal (after Day 3 completion)
-export const ACTIVE_DAY = 3;
+export const ACTIVE_DAY = 1;
 
 // skip to finale terminal for testing
 export const DEV_SKIP_TO_FINALE = false;
@@ -11,7 +11,7 @@ export const DEV_SKIP_TO_FINALE = false;
 export const PARTICIPANT_CODES = {
     '847293': 'RMAR',
     '562841': 'KJAD',
-    '739156': 'BURR',
+    '739156': 'RBUR',
     '284967': 'RWOE',
     '651382': 'TDRV',
     '493758': 'TSMH',
