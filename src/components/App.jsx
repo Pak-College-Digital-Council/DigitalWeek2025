@@ -6,7 +6,7 @@ import Desktop from './Desktop';
 import ShutdownScreen from './ShutdownScreen';
 import CatchUpScreen from './CatchUpScreen'; 
 
-export function App() {
+export function App({dayToSet = false}) {
   const [currentStage, setCurrentStage] = useState(() => {
     const path = window.location.pathname;
     return path === '/catch-up' ? 'catch-up' : 'boot';
@@ -38,6 +38,13 @@ export function App() {
     window.DEV_TOOLS?.setDay(selectedDay);
     setCurrentStage('boot');
   };
+  
+  useEffect(() => {
+    if (dayToSet) {
+      window.DEV_TOOLS?.setDay(dayToSet);
+      setCurrentStage('boot');
+    }
+  }, [dayToSet]);  
 
   useEffect(() => {
     if (currentStage === 'login' || currentStage === 'boot' || currentStage === 'shutdown' || currentStage === 'catch-up') {
