@@ -1,7 +1,13 @@
 import { createContext } from 'preact';
 import { useState, useCallback } from 'preact/hooks';
+import { createClient } from '@supabase/supabase-js';
 
 export const GameSessionContext = createContext();
+
+// Supabase setup
+const supabaseUrl = 'https://eqcwfsadfgirsoncearu.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxY3dmc2FkZmdpcnNvbmNlYXJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ4Njg3NTgsImV4cCI6MjA3MDQ0NDc1OH0.o7NKv4f5MgfOsiGh9knRCFlgp9CdXzS394qCcKXLUvw';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export const GameSessionProvider = ({ children }) => {
   const [sessionData, setSessionData] = useState({
@@ -59,44 +65,40 @@ export const GameSessionProvider = ({ children }) => {
 
   const submitFormData = useCallback(async (day, formUrl) => {
     const currentTime = new Date().toISOString();
-    
 
     const submitForm = async (currentSessionData) => {
       const startTime = currentSessionData.dayStartTimes[day];
       const endTime = currentTime;
-      
-      const formData = new FormData();
-      
 
-      formData.append('_subject', `CODEBREAKERS Day ${day} Completion - ${currentSessionData.participantName || 'UNKNOWN'}`);
-      formData.append('_captcha', 'false');
-      formData.append('_template', 'table');
-      
-
-      formData.append('participant_code', currentSessionData.participantCode || 'UNKNOWN');
-      formData.append('participant_name', currentSessionData.participantName || 'UNKNOWN');
-      formData.append('day', day.toString());
-      formData.append('game_start_time', currentSessionData.gameStartTime || '');
-      formData.append('day_start_time', startTime || '');
-      formData.append('day_end_time', endTime);
-      formData.append('incorrect_count', (currentSessionData.incorrectCounts[day] || 0).toString());
-      formData.append('total_incorrect_count', Object.values(currentSessionData.incorrectCounts).reduce((sum, count) => sum + count, 0).toString());
-      formData.append('submission_timestamp', currentTime);
+      const dataToInsert = {
+        subject: `CODEBREAKERS Day ${day} Completion - ${currentSessionData.participantName || 'UNKNOWN'}`,
+        participant_code: currentSessionData.participantCode || 'UNKNOWN',
+        participant_name: currentSessionData.participantName || 'UNKNOWN',
+        day: day,
+        game_start_time: currentSessionData.gameStartTime || null,
+        day_start_time: startTime || null,
+        day_end_time: endTime,
+        incorrect_count: currentSessionData.incorrectCounts[day] || 0,
+        total_incorrect_count: Object.values(currentSessionData.incorrectCounts).reduce((sum, count) => sum + count, 0),
+        submission_timestamp: currentTime
+      };
 
       try {
-        const response = await fetch(formUrl, {
-          method: 'POST',
-          body: formData,
-          mode: 'no-cors'
-        });
-        
-        return response;
-      } catch (error) {
+        const { data, error } = await supabase
+            .from('completions') // table name in Supabase
+            .insert([dataToInsert]);
 
+        if (error) {
+          console.error('Error inserting data:', error);
+          return null;
+        }
+
+        return data;
+      } catch (error) {
+        console.error('Unexpected error:', error);
         return null;
       }
     };
-
 
     await submitForm(sessionData);
   }, [sessionData]);
@@ -111,8 +113,8 @@ export const GameSessionProvider = ({ children }) => {
   };
 
   return (
-    <GameSessionContext.Provider value={contextValue}>
-      {children}
-    </GameSessionContext.Provider>
+      <GameSessionContext.Provider value={contextValue}>
+        {children}
+      </GameSessionContext.Provider>
   );
 };
