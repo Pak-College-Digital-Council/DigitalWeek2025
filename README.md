@@ -17,7 +17,7 @@ Players will solve missions, uncover hidden clues, and ultimately work together 
 
 ---
 
-## 🔗 Demo
+## Demo
 
 Check out a live demo:  
 [![View Online Demo](https://img.shields.io/badge/View-Demo-brightgreen)](https://pakdigitalweek2025.netlify.app/catch-up)  
@@ -26,7 +26,7 @@ Check out a live demo:
 
 ---
 
-## 🛡️ License
+## License
 
 This project is released under the license specified in the [`LICENSE`](LICENSE) file.
 
